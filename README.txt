@@ -11,9 +11,7 @@ not implemented the context lines feature, which I had grown accustomed to.
 
 One can construct a GNU find_ command that will exclude .svn/ and the rest, but
 the only way I am aware of runs grep_ on each file independently. The startup
-cost of invoking many separate grep_ processes is relatively large. Also, I have
-not found a way to get grep_ to print out the name of the file it is searching
-when it is only given one filename.
+cost of invoking many separate grep_ processes is relatively large.
 
 Thus, I wrote grin to get the features I wanted:
 
