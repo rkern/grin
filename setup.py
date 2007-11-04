@@ -1,0 +1,43 @@
+import os
+from setuptools import setup
+
+# Read the long description from the README.txt
+thisdir = os.path.abspath(os.path.dirname(__file__))
+f = open(os.path.join(thisdir, 'README.txt'))
+long_description = f.read()
+f.close()
+
+
+setup(
+    name = 'grin',
+    version = '0.1',
+    author = 'Robert Kern',
+    author_email = 'robert.kern@gmail.com',
+    description = "A grep program configured the way I like it.",
+    long_description = long_description,
+    license = "BSD",
+    classifiers = [
+        "License :: OSI Approved :: BSD License",
+        "Development Status :: 4 - Beta",
+        "Environment :: Console",
+        "Intended Audience :: Developers",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Topic :: Utilities",
+    ],
+
+    py_modules = ["grin"],
+    entry_points = dict(
+        console_scripts = [
+            "grin = grin:grin_main",
+            "grind = grin:grind_main",
+        ],
+    ),
+    install_requires = [
+        'argparse',
+    ],
+    tests_require = [
+        'nose >= 0.10',
+    ],
+    test_suite = 'nose.collector',
+)
