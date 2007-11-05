@@ -337,7 +337,8 @@ class FileRecognizer(object):
         """ Determine what to do with a directory.
         """
         basename = os.path.split(filename)[-1]
-        if self.skip_hidden_dirs and basename.startswith('.') and basename != '.':
+        if (self.skip_hidden_dirs and basename.startswith('.') and 
+            basename not in ('.', '..')):
             return 'skip'
         if self.skip_symlink_dirs and os.path.islink(filename):
             return 'link'

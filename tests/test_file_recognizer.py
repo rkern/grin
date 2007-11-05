@@ -5,6 +5,8 @@ import os
 import shutil
 import sys
 
+import nose
+
 from grin import FileRecognizer
 
 def empty_file(filename):
@@ -280,3 +282,50 @@ def test_walking():
     ]
     result = list(fr.walk('tree'))
     assert result == truth
+
+
+def predot():
+    os.chdir('tree')
+
+def postdot():
+    os.chdir('..')
+
+@nose.with_setup(predot, postdot)
+def test_dot():
+    fr = FileRecognizer(skip_hidden_files=True, skip_hidden_dirs=True,
+        skip_exts=set(['.skip_ext']),skip_dirs=set(['skip_dir']))
+    truth = [
+        ('./binary', 'binary'),
+        ('./dir/subdir/text', 'text'),
+        ('./dir/text', 'text'),
+        ('./dir.skip_ext/text', 'text'),
+        ('./text', 'text'),
+        ('./text.dont_skip_ext', 'text'),
+    ]
+    result = list(fr.walk('.'))
+    assert result == truth
+
+def predotdot():
+    os.chdir('tree')
+    os.chdir('dir')
+
+def postdotdot():
+    os.chdir('..')
+    os.chdir('..')
+
+@nose.with_setup(predotdot, postdotdot)
+def test_dot_dot():
+    fr = FileRecognizer(skip_hidden_files=True, skip_hidden_dirs=True,
+        skip_exts=set(['.skip_ext']),skip_dirs=set(['skip_dir']))
+    truth = [
+        ('../binary', 'binary'),
+        ('../dir/subdir/text', 'text'),
+        ('../dir/text', 'text'),
+        ('../dir.skip_ext/text', 'text'),
+        ('../text', 'text'),
+        ('../text.dont_skip_ext', 'text'),
+    ]
+    result = list(fr.walk('..'))
+    assert result == truth
+
+
