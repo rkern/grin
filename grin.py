@@ -421,6 +421,8 @@ def get_grin_arg_parser(parser=None):
         help="the number of lines of context to show before the match")
     parser.add_argument('-C', '--context', type=int,
         help="the number of lines of context to show on either side of the match")
+    parser.add_argument('-I', '--include', default='*',
+        help="only search in files matching this glob")
     parser.add_argument('-n', '--line-number', action='store_true',
         dest='show_line_numbers', default=True, help="show the line numbers")
     parser.add_argument('-N', '--no-line-number', action='store_false',
@@ -548,11 +550,11 @@ def get_filenames(args):
     fr = get_recognizer(args)
     for fn in files:
         kind = fr.recognize(fn)
-        if kind == 'text':
+        if kind == 'text' and fnmatch.fnmatch(fn, args.include):
             yield fn
         elif kind == 'directory':
             for filename, k in fr.walk(fn):
-                if k == 'text':
+                if k == 'text' and fnmatch.fnmatch(filename, args.include):
                     yield filename
         # XXX: warn about other files?
         # XXX: handle binary?
