@@ -21,6 +21,14 @@ POST = 1
 TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + range(0x20, 0x100)))
 ALLBYTES = ''.join(map(chr, range(256)))
 
+# Color terminals; if TERM is one of these, we will attempt color output
+COLOR_TERMS = ('rxvt', 'xterm', 'xterm-color')
+COLOR_TABLE = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
+               'white', 'default']
+COLOR_STYLE = {
+        'filename': dict(fg="green", bold=True),
+        'searchterm': dict(fg="black", bg="yellow"),
+        }
 
 def is_binary_string(bytes):
     """ Determine if a string is classified as binary rather than text.
@@ -51,6 +59,47 @@ def sliding_window(seq, n):
     for elem in it:
         result = result[1:] + (elem,)
         yield result
+
+def colorize(s, fg=None, bg=None, bold=False, underline=False, reverse=False):
+    """ Wraps a string with ANSI color escape sequences corresponding to the
+    style parameters given.  All of the color and style parameters are optional.
+    
+    Parameters
+    ----------
+    s : str
+    fg : str
+        Foreground color of the text.  One of (black, red, green, yellow, blue, 
+        magenta, cyan, white, default)
+    bg : str
+        Background color of the text.  Color choices are the same as for fg.
+    bold : bool
+        Whether or not to display the text in bold.
+    underline : bool
+        Whether or not to underline the text.
+    reverse : bool
+        Whether or not to show the text in reverse video.
+
+    Returns
+    -------
+    A string with embedded color escape sequences.
+    """
+    
+    style_fragments = []
+    if fg in COLOR_TABLE:
+        # Foreground colors go from 30-39
+        style_fragments.append(COLOR_TABLE.index(fg) + 30)
+    if bg in COLOR_TABLE:
+        # Background colors go from 40-49
+        style_fragments.append(COLOR_TABLE.index(bg) + 40)
+    if bold:
+        style_fragments.append(1)
+    if underline:
+        style_fragments.append(4)
+    if reverse:
+        style_fragments.append(7)
+    style_start = '\x1b[' + ';'.join(map(str,style_fragments)) + 'm'
+    style_end = '\x1b[0m'
+    return style_start + s + style_end
 
 
 class Options(dict):
@@ -108,6 +157,12 @@ class GrepText(object):
         fp : filelike object
             An open filelike object or other iterator that yields lines (with
             line endings).
+
+        Returns
+        -------
+        A list of 4-tuples (lineno, type (POST/PRE/MATCH), line, matches).  For
+        each tuple of type MATCH, **matches** is a list of unique strings in the
+        line that matched the regex.
         """
         before = self.options.before_context
         after = self.options.after_context
@@ -130,7 +185,7 @@ class GrepText(object):
             if m is None:
                 if after_state != 0:
                     # This line is part of the "after" context.
-                    context.append((i, POST, line))
+                    context.append((i, POST, line, None))
                     after_state -= 1
                 continue
             else:
@@ -140,8 +195,9 @@ class GrepText(object):
                 for j, before_line in zip(range(i-len(lines)+1, i), lines[:-1]):
                     # XXX: we can probably simply avoid adding duplicate
                     # lines here instead of doing a second pass.
-                    context.append((j, PRE, before_line))
-                context.append((i, MATCH, line))
+                    context.append((j, PRE, before_line, None))
+                matches = set(self.regex.findall(line))
+                context.append((i, MATCH, line, matches))
 
         unique_context = self.uniquify_context(context)
         return unique_context
@@ -152,15 +208,15 @@ class GrepText(object):
         context.sort()
         unique_context = []
         for group in itertools.groupby(context, lambda ikl: ikl[0]):
-            for i, kind, line in group[1]:
+            for i, kind, line, matches in group[1]:
                 if kind == MATCH:
                     # Always use a match.
-                    unique_context.append((i, kind, line))
+                    unique_context.append((i, kind, line, matches))
                     break
             else:
                 # No match, only PRE and/or POST lines. Use the last one, which
                 # should be a POST since we've sorted it that way.
-                unique_context.append((i, kind, line))
+                unique_context.append((i, kind, line, matches))
 
         return unique_context
 
@@ -189,14 +245,22 @@ class GrepText(object):
             line = '%s\n' % filename
             lines.append(line)
         else:
+            use_color = sys.stdout.isatty() and (os.environ.get('TERM') in COLOR_TERMS)
+
             if self.options.show_filename and filename is not None:
                 line = '%s:\n' % filename
+                if use_color:
+                    line = colorize(line, **COLOR_STYLE.get('filename', {}))
                 lines.append(line)
             if self.options.show_line_numbers:
                 template = '%(lineno)5s %(sep)s %(line)s'
             else:
                 template = '%(line)s'
-            for i, kind, line in context_lines:
+            for i, kind, line, matches in context_lines:
+                if use_color and kind == MATCH and 'searchterm' in COLOR_STYLE:
+                    style = COLOR_STYLE['searchterm']
+                    for match in matches:
+                        line = line.replace(match, colorize(match, **style))
                 ns = dict(
                     lineno = i+1,
                     sep = {PRE: '-', POST: '+', MATCH: ':'}[kind],
@@ -209,6 +273,7 @@ class GrepText(object):
 
         text = ''.join(lines)
         return text
+
 
     def grep_a_file(self, filename):
         """ Grep a single file that actually exists on the file system.
