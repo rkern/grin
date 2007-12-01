@@ -160,9 +160,9 @@ class GrepText(object):
 
         Returns
         -------
-        A list of 4-tuples (lineno, type (POST/PRE/MATCH), line, matches).  For
-        each tuple of type MATCH, **matches** is a list of unique strings in the
-        line that matched the regex.
+        A list of 4-tuples (lineno, type (POST/PRE/MATCH), line, spans).  For
+        each tuple of type MATCH, **spans** is a list of (start,end) positions
+        of substrings that matched the pattern.
         """
         before = self.options.before_context
         after = self.options.after_context
@@ -196,8 +196,8 @@ class GrepText(object):
                     # XXX: we can probably simply avoid adding duplicate
                     # lines here instead of doing a second pass.
                     context.append((j, PRE, before_line, None))
-                matches = set(self.regex.findall(line))
-                context.append((i, MATCH, line, matches))
+                spans = [match.span() for match in self.regex.finditer(line)]
+                context.append((i, MATCH, line, spans))
 
         unique_context = self.uniquify_context(context)
         return unique_context
@@ -225,7 +225,7 @@ class GrepText(object):
 
         Parameters
         ----------
-        context_lines : list of tuples of (int, PRE/MATCH/POST, str)
+        context_lines : list of tuples of (int, PRE/MATCH/POST, str, spans)
             The lines of matches and context.
         filename : str, optional
             The name of the file being grepped, if one exists. If not provided,
@@ -256,11 +256,19 @@ class GrepText(object):
                 template = '%(lineno)5s %(sep)s %(line)s'
             else:
                 template = '%(line)s'
-            for i, kind, line, matches in context_lines:
+            for i, kind, line, spans in context_lines:
                 if use_color and kind == MATCH and 'searchterm' in COLOR_STYLE:
                     style = COLOR_STYLE['searchterm']
-                    for match in matches:
-                        line = line.replace(match, colorize(match, **style))
+                    orig_line = line[:]
+                    total_offset = 0
+                    for start, end in spans:
+                        old_substring = orig_line[start:end]
+                        start += total_offset
+                        end += total_offset
+                        color_substring = colorize(old_substring, **style)
+                        line = line[:start] + color_substring + line[end:]
+                        total_offset += len(color_substring) - len(old_substring)
+                        
                 ns = dict(
                     lineno = i+1,
                     sep = {PRE: '-', POST: '+', MATCH: ':'}[kind],
