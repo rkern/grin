@@ -615,11 +615,11 @@ def get_filenames(args):
     fr = get_recognizer(args)
     for fn in files:
         kind = fr.recognize(fn)
-        if kind == 'text' and fnmatch.fnmatch(fn, args.include):
+        if kind == 'text' and fnmatch.fnmatch(os.path.basename(fn), args.include):
             yield fn
         elif kind == 'directory':
             for filename, k in fr.walk(fn):
-                if k == 'text' and fnmatch.fnmatch(filename, args.include):
+                if k == 'text' and fnmatch.fnmatch(os.path.basename(filename), args.include):
                     yield filename
         # XXX: warn about other files?
         # XXX: handle binary?
