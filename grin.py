@@ -22,7 +22,7 @@ TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + range(0x20, 0x100)))
 ALLBYTES = ''.join(map(chr, range(256)))
 
 # Color terminals; if TERM is one of these, we will attempt color output
-COLOR_TERMS = ('rxvt', 'xterm', 'xterm-color')
+COLOR_TERMS = ('rxvt', 'xterm', 'xterm-color', 'linux')
 COLOR_TABLE = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
                'white', 'default']
 COLOR_STYLE = {
