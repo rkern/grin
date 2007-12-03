@@ -2,3 +2,5 @@ Acknowledgements
 ----------------
 
 Stefan van der Walt for implementing the --include feature.
+
+Peter Wang for implementing colorization.
