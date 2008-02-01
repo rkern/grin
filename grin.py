@@ -555,7 +555,7 @@ def get_grind_arg_parser(parser=None):
     """
     if parser is None:
         parser = argparse.ArgumentParser(
-            description="Find text files using similar rules as grin.",
+            description="Find text and binary files using similar rules as grin.",
             epilog="Bug reports to <enthought-dev@mail.enthought.com>.",
             version='grind %s' % __version__,
         )
