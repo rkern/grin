@@ -62,7 +62,9 @@ def sliding_window(seq, n):
 
 def colorize(s, fg=None, bg=None, bold=False, underline=False, reverse=False):
     """ Wraps a string with ANSI color escape sequences corresponding to the
-    style parameters given.  All of the color and style parameters are optional.
+    style parameters given.
+    
+    All of the color and style parameters are optional.
     
     Parameters
     ----------
@@ -245,11 +247,9 @@ class GrepText(object):
             line = '%s\n' % filename
             lines.append(line)
         else:
-            use_color = sys.stdout.isatty() and (os.environ.get('TERM') in COLOR_TERMS)
-
             if self.options.show_filename and filename is not None:
                 line = '%s:\n' % filename
-                if use_color:
+                if self.options.use_color:
                     line = colorize(line, **COLOR_STYLE.get('filename', {}))
                 lines.append(line)
             if self.options.show_line_numbers:
@@ -257,7 +257,7 @@ class GrepText(object):
             else:
                 template = '%(line)s'
             for i, kind, line, spans in context_lines:
-                if use_color and kind == MATCH and 'searchterm' in COLOR_STYLE:
+                if self.options.use_color and kind == MATCH and 'searchterm' in COLOR_STYLE:
                     style = COLOR_STYLE['searchterm']
                     orig_line = line[:]
                     total_offset = 0
@@ -512,6 +512,8 @@ def get_grin_arg_parser(parser=None):
     parser.add_argument('-L', '--files-without-matches', action='store_true',
         dest='show_match', default=False,
         help="show the matches with the filenames")
+    parser.add_argument('--no-color', action='store_true',
+        help="do not use colorized output")
     parser.add_argument('-s', '--no-skip-hidden-files',
         dest='skip_hidden_files', action='store_false',
         help="do not skip .hidden files")
@@ -650,6 +652,9 @@ def grin_main(argv=None):
     if args.context is not None:
         args.before_context = args.context
         args.after_context = args.context
+    args.use_color = (not args.no_color and sys.stdout.isatty() and
+        (os.environ.get('TERM') in COLOR_TERMS))
+
     regex = get_regex(args)
     g = GrepText(regex, args)
     for filename in get_filenames(args):
