@@ -10,7 +10,7 @@ f.close()
 
 setup(
     name = 'grin',
-    version = '0.1',
+    version = '1.0',
     author = 'Robert Kern',
     author_email = 'robert.kern@gmail.com',
     description = "A grep program configured the way I like it.",

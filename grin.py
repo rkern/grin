@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+""" grin searches text files.
+"""
 
 from __future__ import with_statement
 
@@ -12,7 +14,9 @@ import argparse
 
 
 #### Constants ####
-# Maintain the order of these constants. We use them for sorting.
+__version__ = '1.0'
+
+# Maintain the numerical order of these constants. We use them for sorting.
 PRE = -1
 MATCH = 0
 POST = 1
@@ -484,7 +488,11 @@ def get_grin_arg_parser(parser=None):
     """ Create the command-line parser.
     """
     if parser is None:
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(
+            description="Search text files for a given regex pattern.",
+            epilog="Bug reports to <enthought-dev@mail.enthought.com>.",
+            version='grin %s' % __version__,
+        )
 
     parser.add_argument('-i', '--ignore-case', action='append_const',
         dest='re_flags', const=re.I, default=[], help="ignore case in the regex")
@@ -546,7 +554,11 @@ def get_grind_arg_parser(parser=None):
     """ Create the command-line parser for the find-like companion program.
     """
     if parser is None:
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(
+            description="Find text files using similar rules as grin.",
+            epilog="Bug reports to <enthought-dev@mail.enthought.com>.",
+            version='grind %s' % __version__,
+        )
 
     parser.add_argument('-s', '--no-skip-hidden-files',
         dest='skip_hidden_files', action='store_false',
@@ -571,8 +583,9 @@ def get_grind_arg_parser(parser=None):
     parser.add_argument('--dirs', nargs='+', default=["."],
         help="the directories to start from")
 
-    parser.add_argument('glob',
-        help="the glob pattern to match")
+    parser.add_argument('glob', default='*', nargs='?',
+        help="the glob pattern to match; you may need to quote this to prevent "
+            "the shell from trying to expand it [default=%(default)r]")
 
     return parser
 
