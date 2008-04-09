@@ -1,6 +1,7 @@
 """ Test the file recognizer capabilities.
 """
 
+import gzip
 import os
 import shutil
 import sys
@@ -9,16 +10,16 @@ import nose
 
 from grin import FileRecognizer
 
-def empty_file(filename):
+def empty_file(filename, open=open):
     f = open(filename, 'wb')
     f.close()
 
-def binary_file(filename):
+def binary_file(filename, open=open):
     f = open(filename, 'wb')
     f.write(''.join(map(chr, range(256))))
     f.close()
 
-def text_file(filename):
+def text_file(filename, open=open):
     lines = ['foo\n', 'bar\n'] * 100
     lines.append('baz\n')
     lines.extend(['foo\n', 'bar\n'] * 100)
@@ -26,7 +27,7 @@ def text_file(filename):
     f.writelines(lines)
     f.close()
 
-def binary_middle(filename):
+def binary_middle(filename, open=open):
     """ Write out a file that is text for the first 100 bytes, then 100 binary
     bytes, then 100 text bytes to test that the recognizer only reads some of
     the file.
@@ -68,6 +69,11 @@ def setup():
     os.mkdir('dir')
     binary_file('.binary')
     text_file('.text')
+    empty_file('empty.gz', open=gzip.open)
+    binary_file('binary.gz', open=gzip.open)
+    text_file('text.gz', open=gzip.open)
+    binary_file('.binary.gz', open=gzip.open)
+    text_file('.text.gz', open=gzip.open)
     os.mkdir('.dir')
     os.symlink('binary', 'binary_link')
     os.symlink('text', 'text_link')
@@ -126,13 +132,13 @@ def ensure_deletability(arg, dirname, fnames):
             os.chmod(fn, 0700)
 
 def teardown():
-    files_to_delete = ['empty', 'binary', 'text', 'dir', 'binary_link',
-        'text_link', 'dir_link', '.binary', '.text', '.dir', '.binary_link',
-        '.text_link', '.dir_link', 'unreadable_file', 'unreadable_dir',
-        'unexecutable_dir', 'totally_unusable_dir', 'unreadable_file_link',
-        'unreadable_dir_link', 'unexecutable_dir_link',
-        'totally_unusable_dir_link', 'text.skip_ext', 'text.dont_skip_ext',
-        'dir.skip_ext', 'skip_dir', 'fake_skip_dir',
+    files_to_delete = ['empty', 'binary', 'text', 'empty.gz', 'binary.gz',
+        'text.gz', 'dir', 'binary_link', 'text_link', 'dir_link', '.binary',
+        '.text', '.binary.gz', '.text.gz', '.dir', '.binary_link', '.text_link',
+        '.dir_link', 'unreadable_file', 'unreadable_dir', 'unexecutable_dir',
+        'totally_unusable_dir', 'unreadable_file_link', 'unreadable_dir_link',
+        'unexecutable_dir_link', 'totally_unusable_dir_link', 'text.skip_ext',
+        'text.dont_skip_ext', 'dir.skip_ext', 'skip_dir', 'fake_skip_dir',
     ]
     for filename in files_to_delete:
         try:

@@ -5,6 +5,7 @@
 from __future__ import with_statement
 
 import fnmatch
+import gzip
 import itertools
 import os
 import re
@@ -33,6 +34,10 @@ COLOR_STYLE = {
         'filename': dict(fg="green", bold=True),
         'searchterm': dict(fg="black", bg="yellow"),
         }
+
+# gzip magic header bytes.
+GZIP_MAGIC = '\037\213'
+
 
 def is_binary_string(bytes):
     """ Determine if a string is classified as binary rather than text.
@@ -287,21 +292,28 @@ class GrepText(object):
         return text
 
 
-    def grep_a_file(self, filename):
+    def grep_a_file(self, filename, opener=open):
         """ Grep a single file that actually exists on the file system.
 
         Parameters
         ----------
         filename : str
+            The file to open.
+        opener : callable
+            A function to call which creates a file-like object. It should
+            accept a filename and a mode argument like the builtin open()
+            function which is the default.
 
         Returns
         -------
         report : str
             The grep results as text.
         """
-        f = open(filename, 'rb')
-        with f:
+        f = opener(filename, 'rb')
+        try:
             unique_context = self.do_grep(f)
+        finally:
+            f.close()
         report = self.report(unique_context, filename)
         return report
 
@@ -353,7 +365,22 @@ class FileRecognizer(object):
         -------
         is_binary : bool
         """
-        f = open(filename)
+        f = open(filename, 'rb')
+        is_binary = self._is_binary_file(f)
+        f.close()
+        return is_binary
+
+    def _is_binary_file(self, f):
+        """ Determine if a given filelike object has binary data or not.
+
+        Parameters
+        ----------
+        f : filelike object
+
+        Returns
+        -------
+        is_binary : bool
+        """
         start = f.read(self.binary_bytes)
 
         # Now seek back to binary_bytes from the end. If the size of the file is
@@ -368,9 +395,32 @@ class FileRecognizer(object):
         else:
             f.seek(-self.binary_bytes, 2)
             end = f.read(self.binary_bytes)
-        f.close()
         bytes = start + end
         return is_binary_string(bytes)
+
+    def is_gzipped_text(self, filename):
+        """ Determine if a given file is a gzip-compressed text file or not.
+
+        If the uncompressed file is binary and not text, then this will return
+        False.
+
+        Parameters
+        ----------
+        filename : str
+
+        Returns
+        -------
+        is_gzipped_text : bool
+        """
+        is_gzipped_text = False
+        f = open(filename, 'rb')
+        marker = f.read(2)
+        f.close()
+        if marker == GZIP_MAGIC:
+            fp = gzip.open(filename)
+            is_gzipped_text = not self._is_binary_file(fp)
+            fp.close()
+        return is_gzipped_text
 
     def recognize(self, filename):
         """ Determine what kind of thing a filename represents.
@@ -385,6 +435,9 @@ class FileRecognizer(object):
                 The file is binary and should be either ignored or grepped
                 without displaying the matching lines depending on the
                 configuration.
+            'gzip' :
+                The file is gzip-compressed and should be grepped while
+                uncompressing.
             'directory' :
                 The filename refers to a readable and executable directory that
                 should be recursed into if we are configured to do so.
@@ -447,7 +500,10 @@ class FileRecognizer(object):
             # Just to be sure, catch OSErrors.
             try:
                 if self.is_binary(filename):
-                    return 'binary'
+                    if self.is_gzipped_text(filename):
+                        return 'gzip'
+                    else:
+                        return 'binary'
                 else:
                     return 'text'
             except OSError:
@@ -472,7 +528,7 @@ class FileRecognizer(object):
         kind : str
         """
         kind = self.recognize(startpath)
-        if kind in ('binary', 'text'):
+        if kind in ('binary', 'text', 'gzip'):
             yield startpath, kind
             # Not a directory, so there is no need to recurse.
             return
@@ -535,7 +591,7 @@ def get_grin_arg_parser(parser=None):
         action='store_const', const='',
         help="do not skip any directories")
     parser.add_argument('-e', '--skip-exts',
-        default='.pyc,.pyo,.so,.o,.a,.gz,.tgz',
+        default='.pyc,.pyo,.so,.o,.a,.tgz',
         help="comma-separated list of file extensions to skip [default=%(default)r]")
     parser.add_argument('-E', '--no-skip-exts', dest='skip_exts',
         action='store_const', const='',
@@ -573,7 +629,7 @@ def get_grind_arg_parser(parser=None):
         action='store_const', const='',
         help="do not skip any directories")
     parser.add_argument('-e', '--skip-exts',
-        default='.pyc,.pyo,.so,.o,.a,.gz,.tgz',
+        default='.pyc,.pyo,.so,.o,.a,.tgz',
         help="comma-separated list of file extensions to skip [default=%(default)r]")
     parser.add_argument('-E', '--no-skip-exts', dest='skip_exts',
         action='store_const', const='',
@@ -602,6 +658,17 @@ def get_recognizer(args):
 
 def get_filenames(args):
     """ Generate the filenames to grep.
+
+    Parameters
+    ----------
+    args : Namespace
+        The commandline arguments object.
+
+    Yields
+    ------
+    filename : str
+    kind : either 'text' or 'gzip'
+        What kind of file it is.
     """
     files = []
     # If the user has given us a file with filenames, consume them first.
@@ -638,12 +705,12 @@ def get_filenames(args):
     fr = get_recognizer(args)
     for fn in files:
         kind = fr.recognize(fn)
-        if kind == 'text' and fnmatch.fnmatch(os.path.basename(fn), args.include):
-            yield fn
+        if kind in ('text', 'gzip') and fnmatch.fnmatch(os.path.basename(fn), args.include):
+            yield fn, kind
         elif kind == 'directory':
             for filename, k in fr.walk(fn):
-                if k == 'text' and fnmatch.fnmatch(os.path.basename(filename), args.include):
-                    yield filename
+                if k in ('text', 'gzip') and fnmatch.fnmatch(os.path.basename(filename), args.include):
+                    yield filename, k
         # XXX: warn about other files?
         # XXX: handle binary?
 
@@ -670,8 +737,9 @@ def grin_main(argv=None):
 
     regex = get_regex(args)
     g = GrepText(regex, args)
-    for filename in get_filenames(args):
-        report = g.grep_a_file(filename)
+    openers = dict(text=open, gzip=gzip.open)
+    for filename, kind in get_filenames(args):
+        report = g.grep_a_file(filename, opener=openers[kind])
         sys.stdout.write(report)
 
 def print_line(filename):
