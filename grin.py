@@ -9,6 +9,7 @@ import gzip
 import itertools
 import os
 import re
+import shlex
 import sys
 
 import argparse
@@ -576,14 +577,22 @@ def get_grin_arg_parser(parser=None):
     parser.add_argument('-L', '--files-without-matches', action='store_true',
         dest='show_match', default=False,
         help="show the matches with the filenames")
-    parser.add_argument('--no-color', action='store_true',
+    parser.add_argument('--no-color', action='store_true', default=False,
         help="do not use colorized output")
+    parser.add_argument('--use-color', action='store_false', dest='no_color',
+        help="use colorized output")
     parser.add_argument('-s', '--no-skip-hidden-files',
         dest='skip_hidden_files', action='store_false',
         help="do not skip .hidden files")
+    parser.add_argument('--skip-hidden-files',
+        dest='skip_hidden_files', action='store_true', default=True,
+        help="do skip .hidden files")
     parser.add_argument('-S', '--no-skip-hidden-dirs', dest='skip_hidden_dirs',
         action='store_false',
         help="do not skip .hidden directories")
+    parser.add_argument('--skip-hidden-dirs', dest='skip_hidden_dirs',
+        default=True, action='store_true',
+        help="do skip .hidden directories")
     parser.add_argument('-d', '--skip-dirs',
         default='CVS,RCS,.svn,.hg,.bzr,build,dist',
         help="comma-separated list of directory names to skip [default=%(default)r]")
@@ -619,9 +628,15 @@ def get_grind_arg_parser(parser=None):
     parser.add_argument('-s', '--no-skip-hidden-files',
         dest='skip_hidden_files', action='store_false',
         help="do not skip .hidden files")
+    parser.add_argument('--skip-hidden-files',
+        dest='skip_hidden_files', action='store_true', default=True,
+        help="do skip .hidden files")
     parser.add_argument('-S', '--no-skip-hidden-dirs', dest='skip_hidden_dirs',
         action='store_false',
         help="do not skip .hidden directories")
+    parser.add_argument('--skip-hidden-dirs', dest='skip_hidden_dirs',
+        default=True, action='store_true',
+        help="do skip .hidden directories")
     parser.add_argument('-d', '--skip-dirs',
         default='CVS,RCS,.svn,.hg,.bzr,build,dist',
         help="comma-separated list of directory names to skip [default=%(default)r]")
@@ -726,7 +741,9 @@ def get_regex(args):
 
 def grin_main(argv=None):
     if argv is None:
-        argv = sys.argv
+        # Look at the GRIN_ARGS environment variable for more arguments.
+        env_args = shlex.split(os.getenv('GRIN_ARGS', ''))
+        argv = [sys.argv[0]] + env_args + sys.argv[1:]
     parser = get_grin_arg_parser()
     args = parser.parse_args(argv[1:])
     if args.context is not None:
@@ -753,7 +770,9 @@ def print_null(filename):
 
 def grind_main(argv=None):
     if argv is None:
-        argv = sys.argv
+        # Look at the GRIND_ARGS environment variable for more arguments.
+        env_args = shlex.split(os.getenv('GRIND_ARGS', ''))
+        argv = [sys.argv[0]] + env_args + sys.argv[1:]
     parser = get_grind_arg_parser()
     args = parser.parse_args(argv[1:])
 

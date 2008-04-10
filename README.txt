@@ -34,17 +34,20 @@ I have also exposed the directory recursion logic as the command-line tool
 pattern to file names and printing out the matches. It shares the directory and
 file extension skipping settings that grin uses.
 
-I've decided to punt on configuration for the moment. I wanted to use
-ConfigObj_, but I found that importing it added a fair bit of startup time that
-I found unacceptable for this use. Instead, to configure grin, I recommend
-writing your own script that uses grin.py as a library. You can make a modified
-copy of grin.main() which configures the defaults to your liking.
+For configuration, you can specify the environment variables GRIN_ARGS and
+GRIND_ARGS. These should just contain command-line options of their respective
+programs. These will be prepended to the command-line arguments actually given.
+Options given later will override options given earlier, so all options
+explicitly in the command-line will override those in the environment variable.
+For example, if I want to default to two lines of context and no skipped
+directories, I would have this line in my bashrc::
+
+    export GRIN_ARGS="-C 2 --no-skip-dirs"
 
 To do:
 
   * The test for binariness can be made more efficient, I believe.
   * Test coverage needs to be improved.
-  * Needs testing on Windows.
 
 
 .. _grep : http://www.gnu.org/software/grep/
