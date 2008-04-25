@@ -66,6 +66,7 @@ def setup():
     empty_file('empty')
     binary_file('binary')
     text_file('text')
+    text_file('text~')
     os.mkdir('dir')
     binary_file('.binary')
     text_file('.text')
@@ -132,7 +133,7 @@ def ensure_deletability(arg, dirname, fnames):
             os.chmod(fn, 0700)
 
 def teardown():
-    files_to_delete = ['empty', 'binary', 'text', 'empty.gz', 'binary.gz',
+    files_to_delete = ['empty', 'binary', 'text', 'text~', 'empty.gz', 'binary.gz',
         'text.gz', 'dir', 'binary_link', 'text_link', 'dir_link', '.binary',
         '.text', '.binary.gz', '.text.gz', '.dir', '.binary_link', '.text_link',
         '.dir_link', 'unreadable_file', 'unreadable_dir', 'unexecutable_dir',
@@ -202,6 +203,14 @@ def test_skip_hidden():
     assert fr.recognize_file('.text_link') == 'skip'
     assert fr.recognize('.dir_link') == 'skip'
     assert fr.recognize_directory('.dir_link') == 'skip'
+
+def test_skip_backup():
+    fr = FileRecognizer(skip_backup_files=True)
+    assert fr.recognize_file('text~') == 'skip'
+
+def test_do_not_skip_backup():
+    fr = FileRecognizer(skip_backup_files=False)
+    assert fr.recognize_file('text~') == 'text'
 
 def test_do_not_skip_hidden_or_symlinks():
     fr = FileRecognizer(skip_hidden_files=False, skip_hidden_dirs=False,

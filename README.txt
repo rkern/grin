@@ -53,4 +53,3 @@ To do:
 .. _grep : http://www.gnu.org/software/grep/
 .. _ack : http://search.cpan.org/~petdance/ack-1.69_01/ack
 .. _find : http://www.gnu.org/software/findutils/
-.. _ConfigObj : http://www.voidspace.org.uk/python/configobj.html

@@ -134,6 +134,7 @@ def default_options():
         show_filename = True,
         skip_hidden_dirs=False,
         skip_hidden_files=False,
+        skip_backup_files=True,
         skip_dirs=set(),
         skip_exts=set(),
         skip_symlink_dirs=True,
@@ -329,6 +330,8 @@ class FileRecognizer(object):
         with a "." character.
     skip_hidden_files : bool
         Whether to skip hidden files.
+    skip_backup_files : bool
+        Whether to skip backup files.
     skip_dirs : container of str
         A list of directory names to skip. For example, one might want to skip
         directories named "CVS".
@@ -345,10 +348,12 @@ class FileRecognizer(object):
     """
 
     def __init__(self, skip_hidden_dirs=False, skip_hidden_files=False,
-        skip_dirs=set(), skip_exts=set(), skip_symlink_dirs=True,
-        skip_symlink_files=True, binary_bytes=4096):
+                 skip_backup_files=False, skip_dirs=set(), skip_exts=set(),
+                 skip_symlink_dirs=True, skip_symlink_files=True,
+                 binary_bytes=4096):
         self.skip_hidden_dirs = skip_hidden_dirs
         self.skip_hidden_files = skip_hidden_files
+        self.skip_backup_files = skip_backup_files
         self.skip_dirs = skip_dirs
         self.skip_exts = skip_exts
         self.skip_symlink_dirs = skip_symlink_dirs
@@ -489,6 +494,8 @@ class FileRecognizer(object):
         basename = os.path.split(filename)[-1]
         if self.skip_hidden_files and basename.startswith('.'):
             return 'skip'
+        if self.skip_backup_files and basename.endswith('~'):
+            return 'skip'
         if self.skip_symlink_files and os.path.islink(filename):
             return 'link'
         base, ext = os.path.splitext(filename)
@@ -584,9 +591,16 @@ def get_grin_arg_parser(parser=None):
     parser.add_argument('-s', '--no-skip-hidden-files',
         dest='skip_hidden_files', action='store_false',
         help="do not skip .hidden files")
+
     parser.add_argument('--skip-hidden-files',
         dest='skip_hidden_files', action='store_true', default=True,
         help="do skip .hidden files")
+    parser.add_argument('-b', '--no-skip-backup-files',
+        dest='skip_backup_files', action='store_false',
+        help="do not skip backup~ files")
+    parser.add_argument('--skip-backup-files',
+        dest='skip_backup_files', action='store_true', default=True,
+        help="do skip backup~ files")
     parser.add_argument('-S', '--no-skip-hidden-dirs', dest='skip_hidden_dirs',
         action='store_false',
         help="do not skip .hidden directories")
@@ -631,6 +645,12 @@ def get_grind_arg_parser(parser=None):
     parser.add_argument('--skip-hidden-files',
         dest='skip_hidden_files', action='store_true', default=True,
         help="do skip .hidden files")
+    parser.add_argument('-b', '--no-skip-backup-files',
+        dest='skip_backup_files', action='store_false',
+        help="do not skip backup~ files")
+    parser.add_argument('--skip-backup-files',
+        dest='skip_backup_files', action='store_true', default=True,
+        help="do skip backup~ files")
     parser.add_argument('-S', '--no-skip-hidden-dirs', dest='skip_hidden_dirs',
         action='store_false',
         help="do not skip .hidden directories")
@@ -665,6 +685,7 @@ def get_recognizer(args):
     """
     fr = FileRecognizer(
         skip_hidden_files=args.skip_hidden_files,
+        skip_backup_files=args.skip_backup_files,
         skip_hidden_dirs=args.skip_hidden_dirs,
         skip_dirs=set(args.skip_dirs.split(',')),
         skip_exts=set(args.skip_exts.split(',')),
