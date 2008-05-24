@@ -1,10 +1,12 @@
 import os
 from setuptools import setup
 
+kwds = {}
+
 # Read the long description from the README.txt
 thisdir = os.path.abspath(os.path.dirname(__file__))
 f = open(os.path.join(thisdir, 'README.txt'))
-long_description = f.read()
+kwds['long_description'] = f.read()
 f.close()
 
 
@@ -14,7 +16,6 @@ setup(
     author = 'Robert Kern',
     author_email = 'robert.kern@gmail.com',
     description = "A grep program configured the way I like it.",
-    long_description = long_description,
     license = "BSD",
     classifiers = [
         "License :: OSI Approved :: BSD License",
@@ -40,4 +41,5 @@ setup(
         'nose >= 0.10',
     ],
     test_suite = 'nose.collector',
+    **kwds
 )
