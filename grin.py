@@ -311,11 +311,17 @@ class GrepText(object):
         report : str
             The grep results as text.
         """
-        f = opener(filename, 'rb')
+        # Special-case stdin as "-".
+        if filename == '-':
+            f = sys.stdin
+            filename = '<STDIN>'
+        else:
+            f = opener(filename, 'rb')
         try:
             unique_context = self.do_grep(f)
         finally:
-            f.close()
+            if filename != '-':
+                f.close()
         report = self.report(unique_context, filename)
         return report
 
@@ -742,6 +748,10 @@ def get_filenames(args):
     # something we want to grep.
     fr = get_recognizer(args)
     for fn in files:
+        # Special case text stdin.
+        if fn == '-':
+            yield fn, 'text'
+            continue
         kind = fr.recognize(fn)
         if kind in ('text', 'gzip') and fnmatch.fnmatch(os.path.basename(fn), args.include):
             yield fn, kind
