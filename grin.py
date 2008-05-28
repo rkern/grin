@@ -393,24 +393,8 @@ class FileRecognizer(object):
         -------
         is_binary : bool
         """
-        start = f.read(self.binary_bytes)
-        if is_binary_string(start):
-            # Early exit to avoid unnecessary seeking.
-            return True
-
-        # Now seek back to binary_bytes from the end. If the size of the file is
-        # less than binary_bytes, then we have a problem: we can't seek past the
-        # beginning of the file from the end with fseek(), so check where we are
-        # now. If our current position in the file is less than binary_bytes,
-        # then we've already read the entire file and don't need to read from
-        # the end. If it is exactly binary_bytes, the file size is at least
-        # binary_bytes and we can fseek just fine.
-        if f.tell() < self.binary_bytes:
-            end = ''
-        else:
-            f.seek(-self.binary_bytes, 2)
-            end = f.read(self.binary_bytes)
-        return is_binary_string(end)
+        bytes = f.read(self.binary_bytes)
+        return is_binary_string(bytes)
 
     def is_gzipped_text(self, filename):
         """ Determine if a given file is a gzip-compressed text file or not.
