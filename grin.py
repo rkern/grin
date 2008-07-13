@@ -731,8 +731,7 @@ def get_filenames(args):
         files = ['.']
 
     # Make sure we don't have any empty strings lying around.
-    while '' in files:
-        files.remove('')
+    files = [fn for fn in files if fn != '']
 
     # Go over our list of filenames and see if we can recognize each as
     # something we want to grep.

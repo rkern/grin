@@ -14,7 +14,7 @@ setup(
     name = 'grin',
     version = '1.1',
     author = 'Robert Kern',
-    author_email = 'robert.kern@gmail.com',
+    author_email = 'robert.kern@enthought.com',
     description = "A grep program configured the way I like it.",
     license = "BSD",
     classifiers = [

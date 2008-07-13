@@ -27,6 +27,16 @@ def text_file(filename, open=open):
     f.writelines(lines)
     f.close()
 
+def fake_gzip_file(filename, open=open):
+    """ Write out a binary file that has the gzip magic header bytes, but is not
+    a gzip file.
+    """
+    GZIP_MAGIC = '\037\213'
+    f = open(filename, 'wb')
+    f.write(GZIP_MAGIC)
+    f.write(''.join(map(chr, range(256))))
+    f.close()
+
 def binary_middle(filename, open=open):
     """ Write out a file that is text for the first 100 bytes, then 100 binary
     bytes, then 100 text bytes to test that the recognizer only reads some of
@@ -65,6 +75,7 @@ def setup():
     # Make files to test individual recognizers.
     empty_file('empty')
     binary_file('binary')
+    binary_middle('binary_middle')
     text_file('text')
     text_file('text~')
     os.mkdir('dir')
@@ -75,6 +86,7 @@ def setup():
     text_file('text.gz', open=gzip.open)
     binary_file('.binary.gz', open=gzip.open)
     text_file('.text.gz', open=gzip.open)
+    fake_gzip_file('fake.gz')
     os.mkdir('.dir')
     os.symlink('binary', 'binary_link')
     os.symlink('text', 'text_link')
@@ -133,13 +145,14 @@ def ensure_deletability(arg, dirname, fnames):
             os.chmod(fn, 0700)
 
 def teardown():
-    files_to_delete = ['empty', 'binary', 'text', 'text~', 'empty.gz', 'binary.gz',
-        'text.gz', 'dir', 'binary_link', 'text_link', 'dir_link', '.binary',
-        '.text', '.binary.gz', '.text.gz', '.dir', '.binary_link', '.text_link',
-        '.dir_link', 'unreadable_file', 'unreadable_dir', 'unexecutable_dir',
-        'totally_unusable_dir', 'unreadable_file_link', 'unreadable_dir_link',
-        'unexecutable_dir_link', 'totally_unusable_dir_link', 'text.skip_ext',
-        'text.dont_skip_ext', 'dir.skip_ext', 'skip_dir', 'fake_skip_dir',
+    files_to_delete = ['empty', 'binary', 'binary_middle', 'text', 'text~',
+        'empty.gz', 'binary.gz', 'text.gz', 'dir', 'binary_link', 'text_link',
+        'dir_link', '.binary', '.text', '.binary.gz', '.text.gz', 'fake.gz',
+        '.dir', '.binary_link', '.text_link', '.dir_link', 'unreadable_file',
+        'unreadable_dir', 'unexecutable_dir', 'totally_unusable_dir',
+        'unreadable_file_link', 'unreadable_dir_link', 'unexecutable_dir_link',
+        'totally_unusable_dir_link', 'text.skip_ext', 'text.dont_skip_ext',
+        'dir.skip_ext', 'skip_dir', 'fake_skip_dir',
     ]
     for filename in files_to_delete:
         try:
@@ -165,6 +178,28 @@ def test_text():
     assert not fr.is_binary('text')
     assert fr.recognize_file('text') == 'text'
     assert fr.recognize('text') == 'text'
+
+def test_gzipped():
+    fr = FileRecognizer()
+    assert fr.is_binary('text.gz')
+    assert fr.recognize_file('text.gz') == 'gzip'
+    assert fr.recognize('text.gz') == 'gzip'
+    assert fr.is_binary('binary.gz')
+    assert fr.recognize_file('binary.gz') == 'binary'
+    assert fr.recognize('binary.gz') == 'binary'
+    assert fr.is_binary('fake.gz')
+    assert fr.recognize_file('fake.gz') == 'binary'
+    assert fr.recognize('fake.gz') == 'binary'
+
+def test_binary_middle():
+    fr = FileRecognizer(binary_bytes=100)
+    assert not fr.is_binary('binary_middle')
+    assert fr.recognize_file('binary_middle') == 'text'
+    assert fr.recognize('binary_middle') == 'text'
+    fr = FileRecognizer(binary_bytes=101)
+    assert fr.is_binary('binary_middle')
+    assert fr.recognize_file('binary_middle') == 'binary'
+    assert fr.recognize('binary_middle') == 'binary'
 
 def test_dir():
     fr = FileRecognizer()
@@ -203,6 +238,10 @@ def test_skip_hidden():
     assert fr.recognize_file('.text_link') == 'skip'
     assert fr.recognize('.dir_link') == 'skip'
     assert fr.recognize_directory('.dir_link') == 'skip'
+    assert fr.recognize('.text.gz') == 'skip'
+    assert fr.recognize_file('.text.gz') == 'skip'
+    assert fr.recognize('.binary.gz') == 'skip'
+    assert fr.recognize_file('.binary.gz') == 'skip'
 
 def test_skip_backup():
     fr = FileRecognizer(skip_backup_files=True)
@@ -227,6 +266,10 @@ def test_do_not_skip_hidden_or_symlinks():
     assert fr.recognize_file('.text_link') == 'text'
     assert fr.recognize('.dir_link') == 'directory'
     assert fr.recognize_directory('.dir_link') == 'directory'
+    assert fr.recognize('.text.gz') == 'gzip'
+    assert fr.recognize_file('.text.gz') == 'gzip'
+    assert fr.recognize('.binary.gz') == 'binary'
+    assert fr.recognize_file('.binary.gz') == 'binary'
 
 def test_do_not_skip_hidden_but_skip_symlinks():
     fr = FileRecognizer(skip_hidden_files=False, skip_hidden_dirs=False,
@@ -243,6 +286,10 @@ def test_do_not_skip_hidden_but_skip_symlinks():
     assert fr.recognize_file('.text_link') == 'link'
     assert fr.recognize('.dir_link') == 'link'
     assert fr.recognize_directory('.dir_link') == 'link'
+    assert fr.recognize('.text.gz') == 'gzip'
+    assert fr.recognize_file('.text.gz') == 'gzip'
+    assert fr.recognize('.binary.gz') == 'binary'
+    assert fr.recognize_file('.binary.gz') == 'binary'
 
 def test_lack_of_permissions():
     fr = FileRecognizer()

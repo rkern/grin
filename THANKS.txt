@@ -6,3 +6,5 @@ Stefan van der Walt for implementing the --include feature.
 Peter Wang for implementing colorization.
 
 Floris Bruynooghe for implementing the skipping of Emacs backup~ files.
+
+Sam Ockman for recommending the feature of grepping through gzipped files.

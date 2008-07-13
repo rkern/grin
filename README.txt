@@ -1,3 +1,7 @@
+====
+grin
+====
+
 I wrote grin to help me search directories full of source code. The venerable
 GNU grep_ and find_ are great tools, but they fall just a little short for my
 normal use cases.
@@ -12,6 +16,8 @@ not implemented the context lines feature, which I had grown accustomed to.
 One can construct a GNU find_ command that will exclude .svn/ and the rest, but
 the only way I am aware of runs grep_ on each file independently. The startup
 cost of invoking many separate grep_ processes is relatively large.
+
+Also, I was bored.
 
 Thus, I wrote grin to get the features I wanted:
 
@@ -28,6 +34,7 @@ Thus, I wrote grin to get the features I wanted:
   * Accept a file (or stdin) with a list of newline-separated filenames. This
     allows one to use find_ to feed grin a list of filenames which might have
     embedded spaces quite easily.
+  * Grep through gzipped text files.
 
 I have also exposed the directory recursion logic as the command-line tool
 "grind" in homage to find_. It will recurse through directories matching a glob
@@ -44,12 +51,68 @@ directories, I would have this line in my bashrc::
 
     export GRIN_ARGS="-C 2 --no-skip-dirs"
 
-To do:
-
-  * The test for binariness can be made more efficient, I believe.
-  * Test coverage needs to be improved.
-
-
 .. _grep : http://www.gnu.org/software/grep/
-.. _ack : http://search.cpan.org/~petdance/ack-1.69_01/ack
+.. _ack : http://search.cpan.org/~petdance/ack/ack
 .. _find : http://www.gnu.org/software/findutils/
+
+
+Installation
+------------
+
+grin uses setuptools_ to find and install its dependency on argparse_. grin is
+easy_installable::
+
+  $ easy_install grin
+
+Running the unittests requires the nose_ framework, which can also be
+easy_installed::
+
+  $ easy_install "nose >= 0.10"
+  ...
+  $ nosetests 
+  .........................
+  ----------------------------------------------------------------------
+  Ran 25 tests in 0.192s
+
+  OK
+  $ python setup.py test   # The other way to run the tests.
+  running test
+  ... etc.
+
+The development Subversion repository can be checked out anonymously::
+
+  $ svn co https://svn.enthought.com/svn/sandbox/grin/trunk/ grin
+
+There is one little tweak to the installation that you may want to consider. By
+default, setuptools installs scripts indirectly; the scripts installed to
+$prefix/bin or Python2x\Scripts use setuptools' pkg_resources module to locate
+the exact version of grin egg that installed the script, then loads and runs the
+script's main() function. This is not usually a bad feature, but it can add
+substantial startup overhead for a small command-line utility like grin. If you
+want the response of grin to be snappier, I recommend installing custom scripts
+to the appropriate directory. For grin, it would look like this::
+
+  #!/usr/bin/env python
+  import grin
+  grin.grin_main()
+
+For grind::
+
+  #!/usr/bin/env python
+  import grin
+  grin.grind_main()
+
+.. _setuptools : http://pypi.python.org/pypi/setuptools
+.. _argparse : http://argparse.python-hosting.com
+.. _nose : http://www.somethingaboutorange.com/mrl/projects/nose
+
+
+Bugs and Such
+-------------
+
+If you find a bug, or a missing feature you really want added, please post to
+the enthought-dev_ mailing list or email the author at
+<robert.kern@enthought.com>.
+
+.. _enthought-dev : https://mail.enthought.com/mailman/listinfo/enthought-dev
+
