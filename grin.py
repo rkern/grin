@@ -554,25 +554,27 @@ def get_grin_arg_parser(parser=None):
             description="Search text files for a given regex pattern.",
             epilog="Bug reports to <enthought-dev@mail.enthought.com>.",
             version='grin %s' % __version__,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
         )
 
     parser.add_argument('-i', '--ignore-case', action='append_const',
         dest='re_flags', const=re.I, default=[], help="ignore case in the regex")
     parser.add_argument('-A', '--after-context', default=0, type=int,
-        help="the number of lines of context to show after the match")
+        help="the number of lines of context to show after the match [default=%(default)r]")
     parser.add_argument('-B', '--before-context', default=0, type=int,
-        help="the number of lines of context to show before the match")
+        help="the number of lines of context to show before the match [default=%(default)r]")
     parser.add_argument('-C', '--context', type=int,
         help="the number of lines of context to show on either side of the match")
     parser.add_argument('-I', '--include', default='*',
-        help="only search in files matching this glob")
+        help="only search in files matching this glob [default=%(default)r]")
     parser.add_argument('-n', '--line-number', action='store_true',
-        dest='show_line_numbers', default=True, help="show the line numbers")
+        dest='show_line_numbers', default=True,
+        help="show the line numbers [default]")
     parser.add_argument('-N', '--no-line-number', action='store_false',
         dest='show_line_numbers', help="do not show the line numbers")
     parser.add_argument('-H', '--with-filename', action='store_true',
         dest='show_filename', default=True, 
-        help="show the filenames of files that match")
+        help="show the filenames of files that match [default]")
     parser.add_argument('--without-filename', action='store_false',
         dest='show_filename', 
         help="do not show the filenames of files that match")
@@ -585,26 +587,25 @@ def get_grin_arg_parser(parser=None):
     parser.add_argument('--no-color', action='store_true', default=False,
         help="do not use colorized output")
     parser.add_argument('--use-color', action='store_false', dest='no_color',
-        help="use colorized output")
+        help="use colorized output [default if outputting to a terminal]")
     parser.add_argument('-s', '--no-skip-hidden-files',
         dest='skip_hidden_files', action='store_false',
         help="do not skip .hidden files")
-
     parser.add_argument('--skip-hidden-files',
         dest='skip_hidden_files', action='store_true', default=True,
-        help="do skip .hidden files")
+        help="do skip .hidden files [default]")
     parser.add_argument('-b', '--no-skip-backup-files',
         dest='skip_backup_files', action='store_false',
         help="do not skip backup~ files")
     parser.add_argument('--skip-backup-files',
         dest='skip_backup_files', action='store_true', default=True,
-        help="do skip backup~ files")
+        help="do skip backup~ files [default]")
     parser.add_argument('-S', '--no-skip-hidden-dirs', dest='skip_hidden_dirs',
         action='store_false',
         help="do not skip .hidden directories")
     parser.add_argument('--skip-hidden-dirs', dest='skip_hidden_dirs',
         default=True, action='store_true',
-        help="do skip .hidden directories")
+        help="do skip .hidden directories [default]")
     parser.add_argument('-d', '--skip-dirs',
         default='CVS,RCS,.svn,.hg,.bzr,build,dist',
         help="comma-separated list of directory names to skip [default=%(default)r]")

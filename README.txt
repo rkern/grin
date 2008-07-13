@@ -35,6 +35,7 @@ Thus, I wrote grin to get the features I wanted:
     allows one to use find_ to feed grin a list of filenames which might have
     embedded spaces quite easily.
   * Grep through gzipped text files.
+  * Be useful as a library to build custom tools quickly.
 
 I have also exposed the directory recursion logic as the command-line tool
 "grind" in homage to find_. It will recurse through directories matching a glob
@@ -90,21 +91,22 @@ the exact version of grin egg that installed the script, then loads and runs the
 script's main() function. This is not usually a bad feature, but it can add
 substantial startup overhead for a small command-line utility like grin. If you
 want the response of grin to be snappier, I recommend installing custom scripts
-to the appropriate directory. For grin, it would look like this::
-
-  #!/usr/bin/env python
-  import grin
-  grin.grin_main()
-
-For grind::
-
-  #!/usr/bin/env python
-  import grin
-  grin.grind_main()
+to the appropriate directory. See the files examples/grin and examples/grind.
 
 .. _setuptools : http://pypi.python.org/pypi/setuptools
 .. _argparse : http://argparse.python-hosting.com
 .. _nose : http://www.somethingaboutorange.com/mrl/projects/nose
+
+
+Using grin as a Library
+-----------------------
+
+One of the goals I had when writing grin was to be able to use it as a library
+to write custom tools. You can see one example that I quickly hacked up in 
+examples/grinimports.py . It reuses almost all of grin's infrastructure, except
+that it preprocesses Python files to extract and normalize just the import
+statements. This lets you conveniently and robustly search for import
+statements.
 
 
 Bugs and Such
