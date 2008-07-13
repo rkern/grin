@@ -14,8 +14,8 @@ also only grepped files with extensions that it knew about. Furthermore, it had
 not implemented the context lines feature, which I had grown accustomed to.
 
 One can construct a GNU find_ command that will exclude .svn/ and the rest, but
-the only way I am aware of runs grep_ on each file independently. The startup
-cost of invoking many separate grep_ processes is relatively large.
+the only reliable way I am aware of runs grep_ on each file independently. The
+startup cost of invoking many separate grep_ processes is relatively large.
 
 Also, I was bored.
 
