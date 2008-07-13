@@ -2,8 +2,6 @@
 """ grin searches text files.
 """
 
-from __future__ import with_statement
-
 import fnmatch
 import gzip
 import itertools
@@ -585,9 +583,12 @@ def get_grin_arg_parser(parser=None):
         dest='show_match', default=False,
         help="show the matches with the filenames")
     parser.add_argument('--no-color', action='store_true', default=False,
-        help="do not use colorized output")
+        help="do not use colorized output [default if piping the output]")
     parser.add_argument('--use-color', action='store_false', dest='no_color',
         help="use colorized output [default if outputting to a terminal]")
+    parser.add_argument('--force-color', action='store_true',
+        help="always use colorized output even when piping to something that "
+            "may not be able to handle it")
     parser.add_argument('-s', '--no-skip-hidden-files',
         dest='skip_hidden_files', action='store_false',
         help="do not skip .hidden files")
@@ -772,7 +773,8 @@ def grin_main(argv=None):
     if args.context is not None:
         args.before_context = args.context
         args.after_context = args.context
-    args.use_color = (not args.no_color and sys.stdout.isatty() and
+    args.use_color = args.force_color or (not args.no_color and
+        sys.stdout.isatty() and
         (os.environ.get('TERM') in COLOR_TERMS))
 
     regex = get_regex(args)

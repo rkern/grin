@@ -98,6 +98,78 @@ to the appropriate directory. See the files examples/grin and examples/grind.
 .. _nose : http://www.somethingaboutorange.com/mrl/projects/nose
 
 
+Using grin
+----------
+
+To recursively search the current directory for a regex::
+
+  $ grin some_regex
+
+To search an explicit set of files::
+
+  $ grin some_regex file1.txt path/to/file2.txt
+
+To recursively search an explicit set of directories::
+
+  $ grin some_regex dir1/ dir2/
+
+To search data piped to stdin::
+
+  $ cat somefile | grin some_regex -
+
+To make the regex case-insensitive::
+
+  $ grin -i some_regex
+
+To output 2 lines of context before, after, or both before and after the
+matches::
+
+  $ grin -B 2 some_regex
+  $ grin -A 2 some_regex
+  $ grin -C 2 some_regex
+
+To only search Python .py files::
+
+  $ grin -I "*.py" some_regex
+
+To suppress the line numbers which are printed by default::
+
+  $ grin -N some_regex
+
+To just show the names of the files that contain matches rather than the matches
+themselves::
+
+  $ grin -l some_regex
+
+To suppress the use of color highlighting::
+
+  # Note that grin does its best to only use color when it detects that it is
+  # outputting to a real terminal. If the output is being piped to a file or
+  # a pager, then no color will be used.
+  $ grin --no-color some_regex
+
+To force the use of color highlighting when piping the output to something that
+is capable of understanding ANSI color escapes::
+
+  $ grin --force-color some_regex | less -R
+
+To avoid recursing into directories named either CVS or RCS::
+
+  $ grin -d CVS,RCS some_regex
+
+By default grin skips a large number of files. To suppress all of this behavior
+and search everything::
+
+  $ grin -sbSDE some_regex
+
+To search for files newer than some_file.txt::
+
+  # If no subdirectory or file in the list contains whitespace:
+  $ grin some_regex `find . -newer some_file.txt`
+
+  # If a subdirectory or file in the list may contain whitespace:
+  $ find . -newer some_file.txt | grin -f - some_regex
+
 Using grin as a Library
 -----------------------
 
@@ -106,7 +178,7 @@ to write custom tools. You can see one example that I quickly hacked up in
 examples/grinimports.py . It reuses almost all of grin's infrastructure, except
 that it preprocesses Python files to extract and normalize just the import
 statements. This lets you conveniently and robustly search for import
-statements.
+statements. Look at "grinimports.py --help" for more information.
 
 
 Bugs and Such
