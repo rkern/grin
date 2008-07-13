@@ -65,6 +65,16 @@ easy_installable::
 
   $ easy_install grin
 
+Alternatively, download and unpack the tarball and install::
+
+  $ tar zxf grin-1.1.tar.gz
+  $ python setup.py install
+
+On UNIX systems, use sudo for the latter command if you need to install the
+scripts to a directory that requires root privileges::
+
+  $ sudo python setup.py install
+
 Running the unittests requires the nose_ framework, which can also be
 easy_installed::
 
@@ -86,12 +96,13 @@ The development Subversion repository can be checked out anonymously::
 
 There is one little tweak to the installation that you may want to consider. By
 default, setuptools installs scripts indirectly; the scripts installed to
-$prefix/bin or Python2x\Scripts use setuptools' pkg_resources module to locate
-the exact version of grin egg that installed the script, then loads and runs the
-script's main() function. This is not usually a bad feature, but it can add
-substantial startup overhead for a small command-line utility like grin. If you
-want the response of grin to be snappier, I recommend installing custom scripts
-to the appropriate directory. See the files examples/grin and examples/grind.
+$prefix/bin or Python2x\Scripts use setuptools' pkg_resources module to load
+the exact version of grin egg that installed the script, then runs the script's
+main() function. This is not usually a bad feature, but it can add substantial
+startup overhead for a small command-line utility like grin. If you want the
+response of grin to be snappier, I recommend installing custom scripts that just
+import the grin module and run the appropriate main() function. See the files
+examples/grin and examples/grind for examples.
 
 .. _setuptools : http://pypi.python.org/pypi/setuptools
 .. _argparse : http://argparse.python-hosting.com
