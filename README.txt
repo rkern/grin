@@ -170,6 +170,30 @@ To search for files newer than some_file.txt::
   # If a subdirectory or file in the list may contain whitespace:
   $ find . -newer some_file.txt | grin -f - some_regex
 
+
+Using grind
+-----------
+
+To find files matching the glob "foo*.py" in this directory or any subdirectory
+using same the default rules as grin::
+
+  $ grind "foo*.py"
+
+To suppress all of the default rules and not skip any files or directories while
+searching::
+
+  $ grind -sbSDE "foo*.py"
+
+To find all files that are not skipped by the default rules::
+
+  $ grind
+
+To start the search in a particular set of directories instead of the current
+one (not the -- separator)::
+
+  $ grind --dirs thisdir that/dir -- "foo*.py"
+
+
 Using grin as a Library
 -----------------------
 
@@ -179,6 +203,18 @@ examples/grinimports.py . It reuses almost all of grin's infrastructure, except
 that it preprocesses Python files to extract and normalize just the import
 statements. This lets you conveniently and robustly search for import
 statements. Look at "grinimports.py --help" for more information.
+
+Similarly, it should be straightforward to write small tools like this which
+extract and search text metadata from binary files.
+
+
+To Do
+-----
+
+* Figure out the story for grepping UTF-8, UTF-16 and UTF-32 Unicode text files.
+* Write some more examples of building small tools on top of grin.
+* Investigate ways to speed up searching. GNU grep is wicked-fast, and I'd like
+  grin to be at least "not slow".
 
 
 Bugs and Such
