@@ -1,9 +1,5 @@
-#!/Library/Frameworks/Python.framework/Versions/2.5/Resources/Python.app/Contents/MacOS/Python
-# EASY-INSTALL-ENTRY-SCRIPT: 'grin==1.0','console_scripts','grind'
-__requires__ = 'grin==1.0'
-import sys
-from pkg_resources import load_entry_point
-
-sys.exit(
-   load_entry_point('grin==1.0', 'console_scripts', 'grind')()
-)
+#!/usr/bin/env python
+# NOTE: You may have to adjust the line above to specify the precise python
+# executable that has the grin module installed.
+import grin
+grin.grind_main()
