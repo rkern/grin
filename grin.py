@@ -14,7 +14,7 @@ import argparse
 
 
 #### Constants ####
-__version__ = '1.1'
+__version__ = '1.1.1'
 
 # Maintain the numerical order of these constants. We use them for sorting.
 PRE = -1
@@ -415,11 +415,12 @@ class FileRecognizer(object):
         if marker == GZIP_MAGIC:
             fp = gzip.open(filename)
             try:
-                is_gzipped_text = not self._is_binary_file(fp)
-            except IOError:
-                # We saw the GZIP_MAGIC marker, but it is not actually a gzip
-                # file.
-                is_gzipped_text = False
+                try:
+                    is_gzipped_text = not self._is_binary_file(fp)
+                except IOError:
+                    # We saw the GZIP_MAGIC marker, but it is not actually a gzip
+                    # file.
+                    is_gzipped_text = False
             finally:
                 fp.close()
         return is_gzipped_text

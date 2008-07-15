@@ -336,13 +336,13 @@ def test_walking():
         skip_exts=set(['.skip_ext']),skip_dirs=set(['skip_dir']))
     truth = [
         ('tree/binary', 'binary'),
+        ('tree/dir.skip_ext/text', 'text'),
         ('tree/dir/subdir/text', 'text'),
         ('tree/dir/text', 'text'),
-        ('tree/dir.skip_ext/text', 'text'),
         ('tree/text', 'text'),
         ('tree/text.dont_skip_ext', 'text'),
     ]
-    result = list(fr.walk('tree'))
+    result = sorted(fr.walk('tree'))
     assert result == truth
 
 
@@ -358,13 +358,13 @@ def test_dot():
         skip_exts=set(['.skip_ext']),skip_dirs=set(['skip_dir']))
     truth = [
         ('./binary', 'binary'),
+        ('./dir.skip_ext/text', 'text'),
         ('./dir/subdir/text', 'text'),
         ('./dir/text', 'text'),
-        ('./dir.skip_ext/text', 'text'),
         ('./text', 'text'),
         ('./text.dont_skip_ext', 'text'),
     ]
-    result = list(fr.walk('.'))
+    result = sorted(fr.walk('.'))
     assert result == truth
 
 def predotdot():
@@ -381,13 +381,13 @@ def test_dot_dot():
         skip_exts=set(['.skip_ext']),skip_dirs=set(['skip_dir']))
     truth = [
         ('../binary', 'binary'),
+        ('../dir.skip_ext/text', 'text'),
         ('../dir/subdir/text', 'text'),
         ('../dir/text', 'text'),
-        ('../dir.skip_ext/text', 'text'),
         ('../text', 'text'),
         ('../text.dont_skip_ext', 'text'),
     ]
-    result = list(fr.walk('..'))
+    result = sorted(fr.walk('..'))
     assert result == truth
 
 
