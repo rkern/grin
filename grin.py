@@ -14,7 +14,7 @@ import argparse
 
 
 #### Constants ####
-__version__ = '1.0'
+__version__ = '1.1'
 
 # Maintain the numerical order of these constants. We use them for sorting.
 PRE = -1
