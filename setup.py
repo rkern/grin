@@ -19,7 +19,7 @@ setup(
     license = "BSD",
     classifiers = [
         "License :: OSI Approved :: BSD License",
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",

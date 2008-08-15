@@ -12,14 +12,17 @@ build/. The results from those directories obscured the results I was actually
 interested in. There are tools like ack_, which skip these directories, but ack_
 also only grepped files with extensions that it knew about. Furthermore, it had
 not implemented the context lines feature, which I had grown accustomed to.
+Recent development has added these features, but I had already released grin by
+the time I found out.
 
 One can construct a GNU find_ command that will exclude .svn/ and the rest, but
 the only reliable way I am aware of runs grep_ on each file independently. The
 startup cost of invoking many separate grep_ processes is relatively large.
 
-Also, I was bored.
+Also, I was bored. It seems to be catching. Perl has ack_, Ruby has rak_, and
+now Python has grin.
 
-Thus, I wrote grin to get the features I wanted:
+I wrote grin to get exactly the features I wanted:
 
   * Recurse directories by default.
   * Do not go into directories with specified names.
@@ -54,6 +57,7 @@ directories, I would have this line in my bashrc::
 
 .. _grep : http://www.gnu.org/software/grep/
 .. _ack : http://search.cpan.org/~petdance/ack/ack
+.. _rak: http://rak.rubyforge.org/
 .. _find : http://www.gnu.org/software/findutils/
 
 
@@ -67,7 +71,7 @@ easy_installable::
 
 Alternatively, download and unpack the tarball and install::
 
-  $ tar zxf grin-1.1.tar.gz
+  $ tar zxf grin-1.1.1.tar.gz
   $ python setup.py install
 
 On UNIX systems, use sudo for the latter command if you need to install the
