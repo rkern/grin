@@ -620,6 +620,8 @@ def get_grin_arg_parser(parser=None):
     parser.add_argument('-E', '--no-skip-exts', dest='skip_exts',
         action='store_const', const='',
         help="do not skip any file extensions")
+    parser.add_argument('--follow-symlinks', action='store_true', default=False,
+        help="follow symlinks to directories and files [default=%(default)r]")
     parser.add_argument('-f', '--files-from-file', metavar="FILE",
         help="read files to search from a file, one per line; - for stdin")
     parser.add_argument('-0', '--null-separated', action='store_true',
@@ -670,6 +672,8 @@ def get_grind_arg_parser(parser=None):
     parser.add_argument('-E', '--no-skip-exts', dest='skip_exts',
         action='store_const', const='',
         help="do not skip any file extensions")
+    parser.add_argument('--follow-symlinks', action='store_true', default=False,
+        help="follow symlinks to directories and files [default=%(default)r]")
     parser.add_argument('-0', '--null-separated', action='store_true',
         help="print the filenames separated by NULs")
     parser.add_argument('--dirs', nargs='+', default=["."],
@@ -690,6 +694,8 @@ def get_recognizer(args):
         skip_hidden_dirs=args.skip_hidden_dirs,
         skip_dirs=set(args.skip_dirs.split(',')),
         skip_exts=set(args.skip_exts.split(',')),
+        skip_symlink_files=not args.follow_symlinks,
+        skip_symlink_dirs=not args.follow_symlinks,
     )
     return fr
 
