@@ -629,6 +629,8 @@ def get_grin_arg_parser(parser=None):
         help="read files to search from a file, one per line; - for stdin")
     parser.add_argument('-0', '--null-separated', action='store_true',
         help="filenames specified in --files-from-file are separated by NULs")
+    parser.add_argument('--sys-path', action='store_true',
+        help="search the directories on sys.path")
 
     parser.add_argument('regex', help="the regular expression to search for")
     parser.add_argument('files', nargs='*', help="the files to search")
@@ -684,6 +686,8 @@ def get_grind_arg_parser(parser=None):
         help="print the filenames separated by NULs")
     parser.add_argument('--dirs', nargs='+', default=["."],
         help="the directories to start from")
+    parser.add_argument('--sys-path', action='store_true',
+        help="search the directories on sys.path")
 
     parser.add_argument('glob', default='*', nargs='?',
         help="the glob pattern to match; you may need to quote this to prevent "
@@ -718,6 +722,10 @@ def get_filenames(args):
     filename : str
     kind : either 'text' or 'gzip'
         What kind of file it is.
+
+    Raises
+    ------
+    IOError if a requested file cannot be found.
     """
     files = []
     # If the user has given us a file with filenames, consume them first.
@@ -728,9 +736,14 @@ def get_filenames(args):
         elif os.path.exists(args.files_from_file):
             files_file = open(args.files_from_file)
             should_close = True
+        else:
+            raise IOError(2, 'No such file: %r' % args.files_from_file)
 
         try:
             # Remove ''
+            # XXX: how can I detect bad filenames? One user accidentally ran
+            # grin -f against a binary file and got an unhelpful error message
+            # later.
             if args.null_separated:
                 files.extend([x.strip() for x in files_file.read().split('\0')])
             else:
@@ -741,6 +754,8 @@ def get_filenames(args):
 
     # Now add the filenames provided on the command line itself.
     files.extend(args.files)
+    if args.sys_path:
+        files.extend(sys.path)
     if len(files) == 0:
         # Add the current directory at least.
         files = ['.']
@@ -819,7 +834,10 @@ def grind_main(argv=None):
         output = print_null
     else:
         output = print_line
-        
+
+    if args.sys_path:
+        args.dirs.extend(sys.path)
+
     fr = get_recognizer(args)
     for dir in args.dirs:
         for filename, k in fr.walk(dir):
