@@ -779,10 +779,6 @@ def get_filenames(args):
     files.extend(args.files)
     if args.sys_path:
         files.extend(sys.path)
-    if len(files) == 0:
-        # Add the current directory at least.
-        files = ['.']
-
     # Make sure we don't have any empty strings lying around.
     # Also skip certain special null files which may be added by programs like
     # Emacs.
@@ -793,6 +789,9 @@ def get_filenames(args):
         upper_bad = set()
         raw_bad = set(['', '/dev/null'])
     files = [fn for fn in files if fn not in raw_bad and fn.upper() not in upper_bad]
+    if len(files) == 0:
+        # Add the current directory at least.
+        files = ['.']
 
     # Go over our list of filenames and see if we can recognize each as
     # something we want to grep.
