@@ -8,3 +8,5 @@ Peter Wang for implementing colorization.
 Floris Bruynooghe for implementing the skipping of Emacs backup~ files.
 
 Sam Ockman for recommending the feature of grepping through gzipped files.
+
+Anders J. Munch for contributing the Emacs compatibility features.

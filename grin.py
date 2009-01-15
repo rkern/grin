@@ -128,6 +128,7 @@ def default_options():
         show_line_numbers = True,
         show_match = True,
         show_filename = True,
+        show_emacs = False,
         skip_hidden_dirs=False,
         skip_hidden_files=False,
         skip_backup_files=True,
@@ -254,12 +255,14 @@ class GrepText(object):
             line = '%s\n' % filename
             lines.append(line)
         else:
-            if self.options.show_filename and filename is not None:
+            if self.options.show_filename and filename is not None and not self.options.show_emacs:
                 line = '%s:\n' % filename
                 if self.options.use_color:
                     line = colorize(line, **COLOR_STYLE.get('filename', {}))
                 lines.append(line)
-            if self.options.show_line_numbers:
+            if self.options.show_emacs:
+                template = '%(filename)s:%(lineno)s: %(line)s'
+            elif self.options.show_line_numbers:
                 template = '%(lineno)5s %(sep)s %(line)s'
             else:
                 template = '%(line)s'
@@ -280,6 +283,7 @@ class GrepText(object):
                     lineno = i+1,
                     sep = {PRE: '-', POST: '+', MATCH: ':'}[kind],
                     line = line,
+                    filename = filename,
                 )
                 line = template % ns
                 lines.append(line)
@@ -312,7 +316,8 @@ class GrepText(object):
             f = sys.stdin
             filename = '<STDIN>'
         else:
-            f = opener(filename, 'rb')
+            # 'r' does the right thing for both open ('rt') and gzip.open ('rb')
+            f = opener(filename, 'r')
         try:
             unique_context = self.do_grep(f)
         finally:
@@ -575,6 +580,9 @@ def get_grin_arg_parser(parser=None):
     parser.add_argument('--without-filename', action='store_false',
         dest='show_filename', 
         help="do not show the filenames of files that match")
+    parser.add_argument('--emacs', action='store_true',
+        dest='show_emacs',
+        help="print the filename with every match for easier parsing by e.g. Emacs")
     parser.add_argument('-l', '--files-with-matches', action='store_false',
         dest='show_match',
         help="show only the filenames and not the texts of the matches")
@@ -759,7 +767,15 @@ def get_filenames(args):
         files = ['.']
 
     # Make sure we don't have any empty strings lying around.
-    files = [fn for fn in files if fn != '']
+    # Also skip certain special null files which may be added by programs like
+    # Emacs.
+    if sys.platform == 'win32':
+        upper_bad = set(['NUL:', 'NUL'])
+        raw_bad = set([''])
+    else:
+        upper_bad = set()
+        raw_bad = set(['', '/dev/null'])
+    files = [fn for fn in files if fn not in raw_bad and fn.upper() not in upper_bad]
 
     # Go over our list of filenames and see if we can recognize each as
     # something we want to grep.
