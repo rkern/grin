@@ -78,6 +78,8 @@ def setup():
     binary_middle('binary_middle')
     text_file('text')
     text_file('text~')
+    text_file('text#')
+    text_file('foo.bar.baz')
     os.mkdir('dir')
     binary_file('.binary')
     text_file('.text')
@@ -152,7 +154,7 @@ def teardown():
         'unreadable_dir', 'unexecutable_dir', 'totally_unusable_dir',
         'unreadable_file_link', 'unreadable_dir_link', 'unexecutable_dir_link',
         'totally_unusable_dir_link', 'text.skip_ext', 'text.dont_skip_ext',
-        'dir.skip_ext', 'skip_dir', 'fake_skip_dir',
+        'dir.skip_ext', 'skip_dir', 'fake_skip_dir', 'text#', 'foo.bar.baz',
     ]
     for filename in files_to_delete:
         try:
@@ -250,6 +252,14 @@ def test_skip_backup():
 def test_do_not_skip_backup():
     fr = FileRecognizer(skip_backup_files=False)
     assert fr.recognize_file('text~') == 'text'
+
+def test_skip_weird_exts():
+    fr = FileRecognizer(skip_exts=set())
+    assert fr.recognize_file('text#') == 'text'
+    assert fr.recognize_file('foo.bar.baz') == 'text'
+    fr = FileRecognizer(skip_exts=set(['#', '.bar.baz']))
+    assert fr.recognize_file('text#') == 'skip'
+    assert fr.recognize_file('foo.bar.baz') == 'skip'
 
 def test_do_not_skip_hidden_or_symlinks():
     fr = FileRecognizer(skip_hidden_files=False, skip_hidden_dirs=False,

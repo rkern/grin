@@ -362,7 +362,19 @@ class FileRecognizer(object):
         self.skip_hidden_files = skip_hidden_files
         self.skip_backup_files = skip_backup_files
         self.skip_dirs = skip_dirs
-        self.skip_exts = skip_exts
+
+        # For speed, split extensions into the simple ones, that are
+        # compatible with os.path.splitext and hence can all be
+        # checked for in a single set-lookup, and the weirdos that
+        # can't and therefore must be checked for one at a time.
+        self.skip_exts_simple = set()
+        self.skip_exts_endswith = list()
+        for ext in skip_exts:
+            if os.path.splitext('foo.bar'+ext)[1] == ext:
+                self.skip_exts_simple.add(ext)
+            else:
+                self.skip_exts_endswith.append(ext)
+        
         self.skip_symlink_dirs = skip_symlink_dirs
         self.skip_symlink_files = skip_symlink_files
         self.binary_bytes = binary_bytes
@@ -498,9 +510,14 @@ class FileRecognizer(object):
             return 'skip'
         if self.skip_symlink_files and os.path.islink(filename):
             return 'link'
-        base, ext = os.path.splitext(filename)
-        if ext in self.skip_exts:
+        
+        filename_nc = os.path.normcase(filename)
+        ext = os.path.splitext(filename_nc)[1]
+        if ext in self.skip_exts_simple or ext.startswith('.~'):
             return 'skip'
+        for ext in self.skip_exts_endswith:
+            if filename_nc.endswith(ext):
+                return 'skip'
         # Follow any possible symlink to the real file in order to check its
         # permissions.
         filename = os.path.realpath(filename)
@@ -604,10 +621,10 @@ def get_grin_arg_parser(parser=None):
         help="do skip .hidden files [default]")
     parser.add_argument('-b', '--no-skip-backup-files',
         dest='skip_backup_files', action='store_false',
-        help="do not skip backup~ files")
+        help="do not skip backup~ files [deprecated; edit --skip-exts]")
     parser.add_argument('--skip-backup-files',
         dest='skip_backup_files', action='store_true', default=True,
-        help="do skip backup~ files [default]")
+        help="do skip backup~ files [default] [deprecated; edit --skip-exts]")
     parser.add_argument('-S', '--no-skip-hidden-dirs', dest='skip_hidden_dirs',
         action='store_false',
         help="do not skip .hidden directories")
@@ -621,7 +638,7 @@ def get_grin_arg_parser(parser=None):
         action='store_const', const='',
         help="do not skip any directories")
     parser.add_argument('-e', '--skip-exts',
-        default='.pyc,.pyo,.so,.o,.a,.tgz',
+        default='.pyc,.pyo,.so,.o,.a,.tgz,.tar.gz,.rar,.zip,~,#,.bak,.png,.jpg,.gif,.bmp,.tif,.tiff,.pyd,.dll,.exe,.obj,.lib',
         help="comma-separated list of file extensions to skip [default=%(default)r]")
     parser.add_argument('-E', '--no-skip-exts', dest='skip_exts',
         action='store_const', const='',
@@ -661,10 +678,10 @@ def get_grind_arg_parser(parser=None):
         help="do skip .hidden files")
     parser.add_argument('-b', '--no-skip-backup-files',
         dest='skip_backup_files', action='store_false',
-        help="do not skip backup~ files")
+        help="do not skip backup~ files [deprecated; edit --skip-exts]")
     parser.add_argument('--skip-backup-files',
         dest='skip_backup_files', action='store_true', default=True,
-        help="do skip backup~ files")
+        help="do skip backup~ files [default] [deprecated; edit --skip-exts]")
     parser.add_argument('-S', '--no-skip-hidden-dirs', dest='skip_hidden_dirs',
         action='store_false',
         help="do not skip .hidden directories")
@@ -678,7 +695,7 @@ def get_grind_arg_parser(parser=None):
         action='store_const', const='',
         help="do not skip any directories")
     parser.add_argument('-e', '--skip-exts',
-        default='.pyc,.pyo,.so,.o,.a,.tgz',
+        default='.pyc,.pyo,.so,.o,.a,.tgz,.tar.gz,.rar,.zip,~,#,.bak,.png,.jpg,.gif,.bmp,.tif,.tiff,.pyd,.dll,.exe,.obj,.lib',
         help="comma-separated list of file extensions to skip [default=%(default)r]")
     parser.add_argument('-E', '--no-skip-exts', dest='skip_exts',
         action='store_const', const='',

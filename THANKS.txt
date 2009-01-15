@@ -9,4 +9,5 @@ Floris Bruynooghe for implementing the skipping of Emacs backup~ files.
 
 Sam Ockman for recommending the feature of grepping through gzipped files.
 
-Anders J. Munch for contributing the Emacs compatibility features.
+Anders J. Munch for contributing the Emacs compatibility features and the
+enhanced extension skipping.
