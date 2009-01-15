@@ -822,25 +822,28 @@ def get_regex(args):
 
 
 def grin_main(argv=None):
-    if argv is None:
-        # Look at the GRIN_ARGS environment variable for more arguments.
-        env_args = shlex.split(os.getenv('GRIN_ARGS', ''))
-        argv = [sys.argv[0]] + env_args + sys.argv[1:]
-    parser = get_grin_arg_parser()
-    args = parser.parse_args(argv[1:])
-    if args.context is not None:
-        args.before_context = args.context
-        args.after_context = args.context
-    args.use_color = args.force_color or (not args.no_color and
-        sys.stdout.isatty() and
-        (os.environ.get('TERM') != 'dumb'))
+    try:
+        if argv is None:
+            # Look at the GRIN_ARGS environment variable for more arguments.
+            env_args = shlex.split(os.getenv('GRIN_ARGS', ''))
+            argv = [sys.argv[0]] + env_args + sys.argv[1:]
+        parser = get_grin_arg_parser()
+        args = parser.parse_args(argv[1:])
+        if args.context is not None:
+            args.before_context = args.context
+            args.after_context = args.context
+        args.use_color = args.force_color or (not args.no_color and
+            sys.stdout.isatty() and
+            (os.environ.get('TERM') != 'dumb'))
 
-    regex = get_regex(args)
-    g = GrepText(regex, args)
-    openers = dict(text=open, gzip=gzip.open)
-    for filename, kind in get_filenames(args):
-        report = g.grep_a_file(filename, opener=openers[kind])
-        sys.stdout.write(report)
+        regex = get_regex(args)
+        g = GrepText(regex, args)
+        openers = dict(text=open, gzip=gzip.open)
+        for filename, kind in get_filenames(args):
+            report = g.grep_a_file(filename, opener=openers[kind])
+            sys.stdout.write(report)
+    except KeyboardInterrupt:
+        raise SystemExit(0)
 
 def print_line(filename):
     print filename
@@ -852,27 +855,30 @@ def print_null(filename):
     sys.stdout.write('\0')
 
 def grind_main(argv=None):
-    if argv is None:
-        # Look at the GRIND_ARGS environment variable for more arguments.
-        env_args = shlex.split(os.getenv('GRIND_ARGS', ''))
-        argv = [sys.argv[0]] + env_args + sys.argv[1:]
-    parser = get_grind_arg_parser()
-    args = parser.parse_args(argv[1:])
+    try:
+        if argv is None:
+            # Look at the GRIND_ARGS environment variable for more arguments.
+            env_args = shlex.split(os.getenv('GRIND_ARGS', ''))
+            argv = [sys.argv[0]] + env_args + sys.argv[1:]
+        parser = get_grind_arg_parser()
+        args = parser.parse_args(argv[1:])
 
-    # Define the output function.
-    if args.null_separated:
-        output = print_null
-    else:
-        output = print_line
+        # Define the output function.
+        if args.null_separated:
+            output = print_null
+        else:
+            output = print_line
 
-    if args.sys_path:
-        args.dirs.extend(sys.path)
+        if args.sys_path:
+            args.dirs.extend(sys.path)
 
-    fr = get_recognizer(args)
-    for dir in args.dirs:
-        for filename, k in fr.walk(dir):
-            if fnmatch.fnmatch(os.path.basename(filename), args.glob):
-                output(filename)
+        fr = get_recognizer(args)
+        for dir in args.dirs:
+            for filename, k in fr.walk(dir):
+                if fnmatch.fnmatch(os.path.basename(filename), args.glob):
+                    output(filename)
+    except KeyboardInterrupt:
+        raise SystemExit(0)
 
 if __name__ == '__main__':
     grin_main()
