@@ -105,8 +105,9 @@ def grinpython_main(argv=None):
     if args.context is not None:
         args.before_context = args.context
         args.after_context = args.context
-    args.use_color = (not args.no_color and sys.stdout.isatty() and
-        (os.environ.get('TERM') in grin.COLOR_TERMS))
+    args.use_color = args.force_color or (not args.no_color and
+        sys.stdout.isatty() and
+        (os.environ.get('TERM') != 'dumb'))
 
     xform = Transformer(args.python_code, args.comments, args.strings)
 
