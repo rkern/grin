@@ -527,7 +527,8 @@ class FileRecognizer(object):
         # permissions.
         filename = os.path.realpath(filename)
         if os.access(filename, os.R_OK):
-            # Just to be sure, catch OSErrors.
+            # Just to be sure, catch OSErrors and IOErrors (sockets
+            # return an IOError when trying to open them).
             try:
                 if self.is_binary(filename):
                     if self.is_gzipped_text(filename):
@@ -536,7 +537,7 @@ class FileRecognizer(object):
                         return 'binary'
                 else:
                     return 'text'
-            except OSError:
+            except (OSError, IOError), e:
                 return 'unreadable'
 
         return 'unreadable'

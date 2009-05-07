@@ -4,6 +4,7 @@
 import gzip
 import os
 import shutil
+import socket
 import sys
 
 import nose
@@ -46,6 +47,10 @@ def binary_middle(filename, open=open):
     f = open(filename, 'wb')
     f.write(text)
     f.close()
+
+def socket_file(filename):
+    s = socket.socket(socket.AF_UNIX)
+    s.bind(filename)
 
 def unreadable_file(filename):
     """ Write a file that does not have read permissions.
@@ -109,6 +114,7 @@ def setup():
     text_file('text.dont_skip_ext')
     os.mkdir('skip_dir')
     text_file('fake_skip_dir')
+    socket_file('socket_test')
 
     # Make a directory tree to test tree-walking.
     os.mkdir('tree')
@@ -164,7 +170,7 @@ def teardown():
                 os.rmdir(filename)
         except Exception, e:
             print >>sys.stderr, 'Could not delete %s: %s' % (filename, e)
-
+    os.unlink('socket_test')
     os.path.walk('tree', ensure_deletability, None)
     shutil.rmtree('tree')
 
@@ -202,6 +208,10 @@ def test_binary_middle():
     assert fr.is_binary('binary_middle')
     assert fr.recognize_file('binary_middle') == 'binary'
     assert fr.recognize('binary_middle') == 'binary'
+
+def test_socket():
+    fr= FileRecognizer()
+    assert fr.recognize('socket_test') == 'unreadable'
 
 def test_dir():
     fr = FileRecognizer()
