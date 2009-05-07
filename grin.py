@@ -406,7 +406,12 @@ class FileRecognizer(object):
         -------
         is_binary : bool
         """
-        bytes = f.read(self.binary_bytes)
+        try:
+            bytes = f.read(self.binary_bytes)
+        except Exception, e:
+            # When trying to read from something that looks like a gzipped file,
+            # it may be corrupt. If we do get an error, assume that the file is binary.
+            return True
         return is_binary_string(bytes)
 
     def is_gzipped_text(self, filename):
