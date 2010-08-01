@@ -578,10 +578,11 @@ def get_grin_arg_parser(parser=None):
         parser = argparse.ArgumentParser(
             description="Search text files for a given regex pattern.",
             epilog="Bug reports to <enthought-dev@mail.enthought.com>.",
-            version='grin %s' % __version__,
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
 
+    parser.add_argument('-v', '--version', action='version', version='grin %s' % __version__,
+        help='show program\'s version number and exit')
     parser.add_argument('-i', '--ignore-case', action='append_const',
         dest='re_flags', const=re.I, default=[], help="ignore case in the regex")
     parser.add_argument('-A', '--after-context', default=0, type=int,
@@ -673,9 +674,10 @@ def get_grind_arg_parser(parser=None):
         parser = argparse.ArgumentParser(
             description="Find text and binary files using similar rules as grin.",
             epilog="Bug reports to <enthought-dev@mail.enthought.com>.",
-            version='grind %s' % __version__,
         )
 
+    parser.add_argument('-v', '--version', action='version', version='grin %s' % __version__,
+        help='show program\'s version number and exit')
     parser.add_argument('-s', '--no-skip-hidden-files',
         dest='skip_hidden_files', action='store_false',
         help="do not skip .hidden files")
