@@ -13,3 +13,6 @@ Anders J. Munch for contributing the Emacs compatibility features and the
 enhanced extension skipping.
 
 Larry Hastings for suggesting to silence the KeyboardInterrupt.
+
+Paul Pelzl for a number of bug fixes, speedups, and the large block processing
+code.
