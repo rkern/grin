@@ -2,13 +2,26 @@ grin is a grep-like tool for recursively searching through text
 files, primarily source code.
 
  Download: http://pypi.python.org/pypi/grin
- Wiki:     https://svn.enthought.com/enthought/wiki/Grin
  SVN:      https://svn.enthought.com/svn/sandbox/grin/trunk
  License:  BSD
 
-grin 1.1.1 is a small bugfix release to clean up the issues found after release
-of 1.1.
+grin 1.2 is a feature release 
 
-  * grin now works with Python 2.4.
-  * The reported version number is now correct.
+  * Add several speed-enhancments from Paul Pelzl.
+
+  * Allow reading of sockets, thanks to Floris Bruynooghe.
+
+  * Added enhanced file extension recognition to handle extensions like # or
+    .tar.gz, thanks to Anders J. Munch.
+
+  * Add grinpython.py example which will search through Python files and only
+    find results in actual code, string literals, or comments, in any
+    combination.
+
+  * Silent handling of KeyboardInterrupt.
+
+  * Bug fixes and small enhancements from Sam Ockman, Adam Gomaa and Larry Hastings.
+
+  * Update the argparse 1.1 to use the new, non-deprecated handling of the
+    --version argument.
 

@@ -71,7 +71,7 @@ easy_installable::
 
 Alternatively, download and unpack the tarball and install::
 
-  $ tar zxf grin-1.1.1.tar.gz
+  $ tar zxf grin-1.2.tar.gz
   $ python setup.py install
 
 On UNIX systems, use sudo for the latter command if you need to install the
@@ -219,6 +219,24 @@ that it preprocesses Python files to extract and normalize just the import
 statements. This lets you conveniently and robustly search for import
 statements. Look at "grinimports.py --help" for more information.
 
+examples/grinpython.py allows you to search through Python files and specify whether you want to search through actual Python code, comments or string literals in any combination. For example::
+
+    $ grinpython.py -i --strings grep grin.py
+    grin.py:
+      188 :     """ Grep a single file for a regex by iterating over the lines in a file.
+      292 :         """ Do a full grep.
+    ...
+
+    $ grinpython.py -i --comments grep grin.py
+    grin.py:
+      979 :     # something we want to grep.
+
+    $ grinpython.py -i --python-code grep grin.py
+    grin.py:
+      187 : class GrepText(object):
+      291 :     def do_grep(self, fp):
+    ...
+
 Similarly, it should be straightforward to write small tools like this which
 extract and search text metadata from binary files.
 
@@ -227,9 +245,6 @@ To Do
 -----
 
 * Figure out the story for grepping UTF-8, UTF-16 and UTF-32 Unicode text files.
-* Write some more examples of building small tools on top of grin.
-* Investigate ways to speed up searching. GNU grep is wicked-fast, and I'd like
-  grin to be at least "not slow".
 
 
 Bugs and Such
