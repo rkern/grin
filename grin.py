@@ -2,6 +2,7 @@
 """ grin searches text files.
 """
 
+import bisect
 import fnmatch
 import gzip
 import itertools
@@ -36,6 +37,9 @@ COLOR_STYLE = {
 # gzip magic header bytes.
 GZIP_MAGIC = '\037\213'
 
+# Target amount of data to read into memory at a time.
+READ_BLOCKSIZE = 16 * 1024 * 1024
+
 
 def is_binary_string(bytes):
     """ Determine if a string is classified as binary rather than text.
@@ -51,22 +55,32 @@ def is_binary_string(bytes):
     nontext = bytes.translate(ALLBYTES, TEXTCHARS)
     return bool(nontext)
     
-def sliding_window(seq, n):
-    """ Returns a sliding window (up to width n) over data from the iterable
+def get_line_offsets(block):
+    """ Compute the list of offsets in DataBlock 'block' which correspond to
+    the beginnings of new lines.
 
-    Adapted from the itertools documentation.
-
-        s -> (s0,), (s0, s1), ... (s0,s1,...s[n-1]), (s1,s2,...,sn), ...
+    Returns: (offset list, count of lines in "current block")
     """
-    it = iter(seq)
-    result = ()
-    for i, elem in itertools.izip(range(n), it):
-        result += (elem,)
-        yield result
-    for elem in it:
-        result = result[1:] + (elem,)
-        yield result
-
+    # Note: this implementation based on string.find() benchmarks about twice as
+    # fast as a list comprehension using re.finditer().
+    line_offsets = [0]
+    line_count = 0    # Count of lines inside range [block.start, block.end) *only*
+    s = block.data
+    while True:
+        next_newline = s.find('\n', line_offsets[-1])
+        if next_newline < 0:
+            # Tack on a final "line start" corresponding to EOF, if not done already.
+            # This makes it possible to determine the length of each line by computing
+            # a difference between successive elements.
+            if line_offsets[-1] < len(s):
+                line_offsets.append(len(s))
+            return (line_offsets, line_count)
+        else:
+            line_offsets.append(next_newline + 1)
+            # Keep track of the count of lines within the "current block"
+            if next_newline >= block.start and next_newline < block.end:
+                line_count += 1
+            
 def colorize(s, fg=None, bg=None, bold=False, underline=False, reverse=False):
     """ Wraps a string with ANSI color escape sequences corresponding to the
     style parameters given.
@@ -142,6 +156,34 @@ def default_options():
     return opt
 
 
+class DataBlock(object):
+    """ This class holds a block of data read from a file, along with
+    some preceding and trailing context.
+
+    Attributes
+    ----------
+    data  : byte string
+    start : int
+        Offset into 'data' where the "current block" begins; everything
+        prior to this is 'before' context bytes
+    end : int
+        Offset into 'data' where the "current block" ends; everything
+        after this is 'after' context bytes
+    before_count : int
+        Number of lines contained in data[:start]
+    is_last : bool
+        True if this is the final block in the file
+    """
+    def __init__(self, data='', start=0, end=0, before_count=0, is_last=False):
+        self.data = data
+        self.start = start
+        self.end = end
+        self.before_count = before_count
+        self.is_last = is_last
+
+EMPTY_DATABLOCK = DataBlock()
+
+
 class GrepText(object):
     """ Grep a single file for a regex by iterating over the lines in a file.
 
@@ -154,11 +196,97 @@ class GrepText(object):
     def __init__(self, regex, options=None):
         # The compiled regex.
         self.regex = regex
+        # An equivalent regex with multiline enabled.
+        self.regex_m = re.compile(regex.pattern, regex.flags | re.MULTILINE)
 
         # The options object from parsing the configuration and command line.
         if options is None:
             options = default_options()
         self.options = options
+
+    def read_block_with_context(self, prev, fp, fp_size):
+        """ Read a block of data from the file, along with some surrounding
+        context.
+        
+        Parameters
+        ----------
+        prev : DataBlock, or None
+            The result of the previous application of read_block_with_context(),
+            or None if this is the first block.
+
+        fp : filelike object
+            The source of block data.
+        
+        fp_size : int or None
+            Size of the file in bytes, or None if the size could not be
+            determined.
+        
+        Returns
+        -------
+        A DataBlock representing the "current" block along with context.
+        """
+        if fp_size is None:
+            target_io_size = READ_BLOCKSIZE
+            block_main = fp.read(target_io_size)
+            is_last_block = len(block_main) < target_io_size
+        else:
+            remaining = max(fp_size - fp.tell(), 0)
+            target_io_size = min(READ_BLOCKSIZE, remaining)
+            block_main = fp.read(target_io_size)
+            is_last_block = target_io_size == remaining
+
+        if prev is None:
+            if is_last_block:
+                # FAST PATH: the entire file fits into a single block, so we
+                # can avoid the overhead of locating lines of 'before' and
+                # 'after' context.
+                result = DataBlock(
+                    data = block_main,
+                    start = 0,
+                    end = len(block_main),
+                    before_count = 0,
+                    is_last = True,
+                )
+                return result
+            else:
+                prev = EMPTY_DATABLOCK
+
+        # SLOW PATH: handle the general case of a large file which is split
+        # across multiple blocks.
+
+        # Look back into 'preceding' for some lines of 'before' context.
+        if prev.end == 0:
+            before_start = 0
+            before_count = 0
+        else:
+            before_start = prev.end - 1
+            before_count = 0
+            for i in range(self.options.before_context):
+                ofs = prev.data.rfind('\n', 0, before_start)
+                before_start = ofs
+                before_count += 1
+                if ofs < 0:
+                    break
+            before_start += 1
+        before_lines = prev.data[before_start:prev.end]
+        # Using readline() to force this block out to a newline boundary...
+        curr_block = (prev.data[prev.end:] + block_main +
+            ('' if is_last_block else fp.readline()))
+        # Read in some lines of 'after' context.
+        if is_last_block:
+            after_lines = ''
+        else:
+            after_lines_list = [fp.readline() for i in range(self.options.after_context)]
+            after_lines = ''.join(after_lines_list)
+
+        result = DataBlock(
+            data = before_lines + curr_block + after_lines,
+            start = len(before_lines),
+            end = len(before_lines) + len(curr_block),
+            before_count = before_count,
+            is_last = is_last_block,
+        )
+        return result
 
     def do_grep(self, fp):
         """ Do a full grep.
@@ -166,8 +294,7 @@ class GrepText(object):
         Parameters
         ----------
         fp : filelike object
-            An open filelike object or other iterator that yields lines (with
-            line endings).
+            An open filelike object.
 
         Returns
         -------
@@ -175,43 +302,91 @@ class GrepText(object):
         each tuple of type MATCH, **spans** is a list of (start,end) positions
         of substrings that matched the pattern.
         """
-        before = self.options.before_context
-        after = self.options.after_context
-        # Start keeping track of the "after" context state. When we hit
-        # a matched line, we'll reset this counter to the number of "after"
-        # context lines we're trying to capture. For each line that follows
-        # that doesn't match, we'll decrement the counter. At 0, we'll stop
-        # accumulating "after" context lines.
-        after_state = 0
         context = []
-
-        # Make a sliding window going over the lines of the file in order to
-        # keep track of the "before" context lines.
-        window = sliding_window(fp, before + 1)
-        for i, lines in enumerate(window):
-            # The last line in the window is the line we're actually
-            # searching.
-            line = lines[-1]
-            m = self.regex.search(line)
-            if m is None:
-                if after_state != 0:
-                    # This line is part of the "after" context.
-                    context.append((i, POST, line, None))
-                    after_state -= 1
-                continue
+        line_count = 0
+        try:
+            status = os.fstat(fp.fileno())
+            if stat.S_ISREG(status.st_mode):
+                fp_size = status.st_size
             else:
-                # This line matches.
-                # Reset the "after" context counter.
-                after_state = after
-                for j, before_line in zip(range(i-len(lines)+1, i), lines[:-1]):
-                    # XXX: we can probably simply avoid adding duplicate
-                    # lines here instead of doing a second pass.
-                    context.append((j, PRE, before_line, None))
-                spans = [match.span() for match in self.regex.finditer(line)]
-                context.append((i, MATCH, line, spans))
+                fp_size = None
+        except AttributeError:  # doesn't support fileno()
+            fp_size = None
+
+        block = self.read_block_with_context(None, fp, fp_size)
+        while block.end > block.start:
+            (block_line_count, block_context) = self.do_grep_block(block,
+                    line_count - block.before_count)
+            context += block_context
+            if block.is_last:
+                break
+
+            next_block = self.read_block_with_context(block, fp, fp_size)
+            if next_block.end > next_block.start:
+                if block_line_count is None:
+                    # If the file contains N blocks, then in the best case we
+                    # will need to compute line offsets for the first N-1 blocks.
+                    # Most files will fit within a single block, so if there are
+                    # no regex matches then we can typically avoid computing *any*
+                    # line offsets.
+                    (_, block_line_count) = get_line_offsets(block)
+                line_count += block_line_count
+            block = next_block
 
         unique_context = self.uniquify_context(context)
         return unique_context
+
+    def do_grep_block(self, block, line_num_offset):
+        """ Grep a single block of file content.
+
+        Parameters
+        ----------
+        block : DataBlock
+            A chunk of file data.
+
+        line_num_offset: int
+            The number of lines preceding block.data.
+
+        Returns
+        -------
+        Tuple of the form
+            (line_count, list of (lineno, type (POST/PRE/MATCH), line, spans).
+        'line_count' is either the number of lines in the block, or None if
+        the line_count was not computed.  For each 4-tuple of type MATCH,
+        **spans** is a list of (start,end) positions of substrings that matched
+        the pattern.
+        """
+        before = self.options.before_context
+        after = self.options.after_context
+        block_context = []
+        line_offsets = None
+        line_count = None
+        
+        def build_match_context(match):
+            match_line_num = bisect.bisect(line_offsets, match.start() + block.start) - 1
+            before_count = min(before, match_line_num)
+            after_count = min(after, (len(line_offsets) - 1) - match_line_num - 1)
+            match_line = block.data[line_offsets[match_line_num]:line_offsets[match_line_num + 1]]
+            spans = [m.span() for m in self.regex.finditer(match_line)]
+
+            before_ctx = [(i + line_num_offset, PRE,
+                block.data[line_offsets[i]:line_offsets[i+1]], None)
+                    for i in range(match_line_num - before_count, match_line_num)]
+            after_ctx = [(i + line_num_offset, POST,
+                block.data[line_offsets[i]:line_offsets[i+1]], None)
+                    for i in range(match_line_num + 1, match_line_num + after_count + 1)]
+            match_ctx = [(match_line_num + line_num_offset, MATCH, match_line, spans)]
+            return before_ctx + match_ctx + after_ctx
+
+        # Using re.MULTILINE here, so ^ and $ will work as expected.
+        for match in self.regex_m.finditer(block.data[block.start:block.end]):
+            # Computing line offsets is expensive, so we do it lazily.  We don't
+            # take the extra CPU hit unless there's a regex match in the file.
+            if line_offsets is None:
+                (line_offsets, line_count) = get_line_offsets(block)
+            block_context += build_match_context(match)
+
+        return (line_count, block_context)
 
     def uniquify_context(self, context):
         """ Remove duplicate lines from the list of context lines.
@@ -584,7 +759,7 @@ def get_grin_arg_parser(parser=None):
         )
 
     parser.add_argument('-v', '--version', action='version', version='grin %s' % __version__,
-        help='show program\'s version number and exit')
+        help="show program's version number and exit")
     parser.add_argument('-i', '--ignore-case', action='append_const',
         dest='re_flags', const=re.I, default=[], help="ignore case in the regex")
     parser.add_argument('-A', '--after-context', default=0, type=int,
@@ -679,7 +854,7 @@ def get_grind_arg_parser(parser=None):
         )
 
     parser.add_argument('-v', '--version', action='version', version='grin %s' % __version__,
-        help='show program\'s version number and exit')
+        help="show program's version number and exit")
     parser.add_argument('-s', '--no-skip-hidden-files',
         dest='skip_hidden_files', action='store_false',
         help="do not skip .hidden files")
