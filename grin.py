@@ -702,9 +702,6 @@ class FileRecognizer(object):
         for ext in self.skip_exts_endswith:
             if filename_nc.endswith(ext):
                 return 'skip'
-        # Follow any possible symlink to the real file in order to check its
-        # permissions.
-        filename = os.path.realpath(filename)
         try:
             if self.is_binary(filename):
                 if self.is_gzipped_text(filename):
