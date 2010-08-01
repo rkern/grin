@@ -13,7 +13,7 @@ import tokenize
 import grin
 
 
-__version__ = '1.0'
+__version__ = '1.2'
 
 
 class Transformer(object):
@@ -84,7 +84,9 @@ def get_grinpython_arg_parser(parser=None):
     parser.set_defaults(include='*.py')
     parser.description = ("Search Python code with strings, comments, and/or "
         "code removed.")
-    parser.version = 'grinpython %s' % __version__,
+    for action in parser._actions:
+        if hasattr(action, 'version'):
+            action.version = 'grinpython %s' % __version__
 
     group = parser.add_argument_group('Code Transformation')
     group.add_argument('-p', '--python-code', action='store_true',

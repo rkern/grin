@@ -12,7 +12,7 @@ f.close()
 
 setup(
     name = 'grin',
-    version = '1.1.1',
+    version = '1.2'
     author = 'Robert Kern',
     author_email = 'robert.kern@enthought.com',
     description = "A grep program configured the way I like it.",

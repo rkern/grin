@@ -13,7 +13,7 @@ import sys
 import grin
 
 
-__version__ = '1.1'
+__version__ = '1.2'
 
 def normalize_From(node):
     """ Return a list of strings of Python 'from' statements, one import on each
@@ -83,7 +83,6 @@ def get_grinimports_arg_parser(parser=None):
     parser.set_defaults(include='*.py')
     parser.description = ("Extract, normalize and search import statements "
         "from Python files.")
-    parser.version = 'grinimports %s' % __version__,
     parser.epilog = """
 For example, if I have a file example.py with a bunch of imports:
 
@@ -121,6 +120,10 @@ the import statements are not normalized.
         2 : import foo.baz as blah
         6 :     "Do something to foo.baz"
 """
+    for action in parser._actions:
+        if hasattr(action, 'version'):
+            action.version = 'grinpython %s' % __version__
+
     return parser
 
 def grinimports_main(argv=None):
