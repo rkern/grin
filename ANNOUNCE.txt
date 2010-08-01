@@ -5,9 +5,9 @@ files, primarily source code.
  SVN:      https://svn.enthought.com/svn/sandbox/grin/trunk
  License:  BSD
 
-grin 1.2 is a feature release 
+grin 1.2 is a feature release.
 
-  * Add several speed-enhancments from Paul Pelzl.
+  * Add several speed-enhancements from Paul Pelzl.
 
   * Allow reading of sockets, thanks to Floris Bruynooghe.
 
