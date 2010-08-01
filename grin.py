@@ -507,10 +507,7 @@ class FileRecognizer(object):
             return 'link'
         if basename in self.skip_dirs:
             return 'skip'
-        if os.access(filename, os.R_OK|os.X_OK):
-            return 'directory'
-
-        return 'unreadable'
+        return 'directory'
 
     def recognize_file(self, filename):
         """ Determine what to do with a file.
@@ -533,21 +530,16 @@ class FileRecognizer(object):
         # Follow any possible symlink to the real file in order to check its
         # permissions.
         filename = os.path.realpath(filename)
-        if os.access(filename, os.R_OK):
-            # Just to be sure, catch OSErrors and IOErrors (sockets
-            # return an IOError when trying to open them).
-            try:
-                if self.is_binary(filename):
-                    if self.is_gzipped_text(filename):
-                        return 'gzip'
-                    else:
-                        return 'binary'
+        try:
+            if self.is_binary(filename):
+                if self.is_gzipped_text(filename):
+                    return 'gzip'
                 else:
-                    return 'text'
-            except (OSError, IOError), e:
-                return 'unreadable'
-
-        return 'unreadable'
+                    return 'binary'
+            else:
+                return 'text'
+        except (OSError, IOError):
+            return 'unreadable'
 
     def walk(self, startpath):
         """ Walk the tree from a given start path yielding all of the files (not
@@ -571,7 +563,10 @@ class FileRecognizer(object):
             # Not a directory, so there is no need to recurse.
             return
         elif kind == 'directory':
-            basenames = os.listdir(startpath)
+            try:
+                basenames = os.listdir(startpath)
+            except OSError:
+                return
             for basename in basenames:
                 path = os.path.join(startpath, basename)
                 for fn, k in self.walk(path):

@@ -211,7 +211,7 @@ def test_binary_middle():
 
 def test_socket():
     fr= FileRecognizer()
-    assert fr.recognize('socket_test') == 'unreadable'
+    assert fr.recognize('socket_test') == 'skip'
 
 def test_dir():
     fr = FileRecognizer()
@@ -315,23 +315,23 @@ def test_lack_of_permissions():
     fr = FileRecognizer()
     assert fr.recognize('unreadable_file') == 'unreadable'
     assert fr.recognize_file('unreadable_file') == 'unreadable'
-    assert fr.recognize('unreadable_directory') == 'unreadable'
-    assert fr.recognize_directory('unreadable_dir') == 'unreadable'
-    assert fr.recognize('unexecutable_dir') == 'unreadable'
-    assert fr.recognize_directory('unexecutable_dir') == 'unreadable'
-    assert fr.recognize('totally_unusable_dir') == 'unreadable'
-    assert fr.recognize_directory('totally_unusable_dir') == 'unreadable'
+    assert fr.recognize('unreadable_dir') == 'directory'
+    assert fr.recognize_directory('unreadable_dir') == 'directory'
+    assert fr.recognize('unexecutable_dir') == 'directory'
+    assert fr.recognize_directory('unexecutable_dir') == 'directory'
+    assert fr.recognize('totally_unusable_dir') == 'directory'
+    assert fr.recognize_directory('totally_unusable_dir') == 'directory'
 
 def test_symlink_src_unreadable():
     fr = FileRecognizer(skip_symlink_files=False, skip_symlink_dirs=False)
     assert fr.recognize('unreadable_file_link') == 'unreadable'
     assert fr.recognize_file('unreadable_file_link') == 'unreadable'
-    assert fr.recognize('unreadable_directory_link') == 'unreadable'
-    assert fr.recognize_directory('unreadable_dir_link') == 'unreadable'
-    assert fr.recognize('unexecutable_dir_link') == 'unreadable'
-    assert fr.recognize_directory('unexecutable_dir_link') == 'unreadable'
-    assert fr.recognize('totally_unusable_dir_link') == 'unreadable'
-    assert fr.recognize_directory('totally_unusable_dir_link') == 'unreadable'
+    assert fr.recognize('unreadable_dir_link') == 'directory'
+    assert fr.recognize_directory('unreadable_dir_link') == 'directory'
+    assert fr.recognize('unexecutable_dir_link') == 'directory'
+    assert fr.recognize_directory('unexecutable_dir_link') == 'directory'
+    assert fr.recognize('totally_unusable_dir_link') == 'directory'
+    assert fr.recognize_directory('totally_unusable_dir_link') == 'directory'
 
 def test_skip_ext():
     fr = FileRecognizer(skip_exts=set(['.skip_ext']))
