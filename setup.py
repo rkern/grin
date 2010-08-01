@@ -35,7 +35,7 @@ setup(
         ],
     ),
     install_requires = [
-        'argparse',
+        'argparse >= 1.1',
     ],
     tests_require = [
         'nose >= 0.10',
