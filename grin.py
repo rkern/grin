@@ -8,6 +8,7 @@ import itertools
 import os
 import re
 import shlex
+import stat
 import sys
 
 import argparse
@@ -481,10 +482,19 @@ class FileRecognizer(object):
         -------
         kind : str
         """
-        if os.path.isdir(filename):
-            return self.recognize_directory(filename)
-        else:
-            return self.recognize_file(filename)
+        try:
+            st_mode = os.stat(filename).st_mode
+            if stat.S_ISREG(st_mode):
+                return self.recognize_file(filename)
+            elif stat.S_ISDIR(st_mode):
+                return self.recognize_directory(filename)
+            else:
+                # We're only interested in regular files and directories.
+                # A named pipe in particular would be problematic, because
+                # it would cause open() to hang indefinitely.
+                return 'skip'
+        except OSError:
+            return 'unreadable'
         
     def recognize_directory(self, filename):
         """ Determine what to do with a directory.
