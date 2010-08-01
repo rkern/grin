@@ -507,9 +507,6 @@ class FileRecognizer(object):
             return 'link'
         if basename in self.skip_dirs:
             return 'skip'
-        # Follow any possible symlink to the real file in order to check its
-        # permissions.
-        filename = os.path.realpath(filename)
         if os.access(filename, os.R_OK|os.X_OK):
             return 'directory'
 
