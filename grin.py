@@ -787,7 +787,7 @@ def get_grin_arg_parser(parser=None):
     parser.add_argument('-L', '--files-without-matches', action='store_true',
         dest='show_match', default=False,
         help="show the matches with the filenames")
-    parser.add_argument('--no-color', action='store_true', default=False,
+    parser.add_argument('--no-color', action='store_true', default=sys.platform == 'win32',
         help="do not use colorized output [default if piping the output]")
     parser.add_argument('--use-color', action='store_false', dest='no_color',
         help="use colorized output [default if outputting to a terminal]")
