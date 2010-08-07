@@ -304,14 +304,17 @@ class GrepText(object):
         """
         context = []
         line_count = 0
-        try:
-            status = os.fstat(fp.fileno())
-            if stat.S_ISREG(status.st_mode):
-                fp_size = status.st_size
-            else:
+        if isinstance(fp, gzip.GzipFile):
+            fp_size = None  # gzipped data is usually longer than the file
+        else:
+            try:
+                status = os.fstat(fp.fileno())
+                if stat.S_ISREG(status.st_mode):
+                    fp_size = status.st_size
+                else:
+                    fp_size = None
+            except AttributeError:  # doesn't support fileno()
                 fp_size = None
-        except AttributeError:  # doesn't support fileno()
-            fp_size = None
 
         block = self.read_block_with_context(None, fp, fp_size)
         while block.end > block.start:
