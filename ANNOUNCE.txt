@@ -5,23 +5,15 @@ files, primarily source code.
  SVN:      https://svn.enthought.com/svn/sandbox/grin/trunk
  License:  BSD
 
-grin 1.2 is a feature release.
+grin 1.2.1 is a bug-fix release.
 
-  * Add several speed-enhancements from Paul Pelzl.
+  * Windows defaults to not coloring the output. (Paul Pelzl)
+    report.
 
-  * Allow reading of sockets, thanks to Floris Bruynooghe.
+  * Fix the reading of gzip files. (Brandon Craig Rhodes)
 
-  * Added enhanced file extension recognition to handle extensions like # or
-    .tar.gz, thanks to Anders J. Munch.
+  * Quit gracefully when piping to a program that exits prematurely.
+    (Brandon Craig Rhodes)
 
-  * Add grinpython.py example which will search through Python files and only
-    find results in actual code, string literals, or comments, in any
-    combination.
-
-  * Silent handling of KeyboardInterrupt.
-
-  * Bug fixes and small enhancements from Sam Ockman, Adam Gomaa and Larry Hastings.
-
-  * Update the argparse 1.1 to use the new, non-deprecated handling of the
-    --version argument.
-
+  * Sort the basenames of files during traversal in order to maintain
+    a repeatable ordering. (Brandon Craig Rhodes)

@@ -16,3 +16,5 @@ Larry Hastings for suggesting to silence the KeyboardInterrupt.
 
 Paul Pelzl for a number of bug fixes, speedups, and the large block processing
 code.
+
+Brandon Craig Rhodes for some bug fixes and enhancements.
