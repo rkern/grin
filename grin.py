@@ -742,7 +742,7 @@ class FileRecognizer(object):
                 basenames = os.listdir(startpath)
             except OSError:
                 return
-            for basename in basenames:
+            for basename in sorted(basenames):
                 path = os.path.join(startpath, basename)
                 for fn, k in self.walk(path):
                     yield fn, k
