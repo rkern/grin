@@ -1026,6 +1026,12 @@ def grin_main(argv=None):
             sys.stdout.write(report)
     except KeyboardInterrupt:
         raise SystemExit(0)
+    except IOError as e:
+        if 'Broken pipe' in str(e):
+            # The user is probably piping to a pager like less(1) and has exited
+            # it. Just exit.
+            raise SystemExit(0)
+        raise
 
 def print_line(filename):
     print filename
