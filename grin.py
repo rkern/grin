@@ -1067,6 +1067,12 @@ def grind_main(argv=None):
                     output(filename)
     except KeyboardInterrupt:
         raise SystemExit(0)
+    except IOError as e:
+        if 'Broken pipe' in str(e):
+            # The user is probably piping to a pager like less(1) and has exited
+            # it. Just exit.
+            raise SystemExit(0)
+        raise
 
 if __name__ == '__main__':
     grin_main()
