@@ -21,7 +21,7 @@ def normalize_From(node):
     """
     statements = []
     children = node.getChildren()
-    module = children[0]
+    module = '.'*node.level + node.modname
     for name, asname in children[1]:
         line = 'from %s import %s' % (module, name)
         if asname is not None:
