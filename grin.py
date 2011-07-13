@@ -906,12 +906,15 @@ def get_grind_arg_parser(parser=None):
 def get_recognizer(args):
     """ Get the file recognizer object from the configured options.
     """
+    # Make sure we have empty sets when we have empty strings.
+    skip_dirs = set([x for x in args.skip_dirs.split(',') if x])
+    skip_exts = set([x for x in args.skip_exts.split(',') if x])
     fr = FileRecognizer(
         skip_hidden_files=args.skip_hidden_files,
         skip_backup_files=args.skip_backup_files,
         skip_hidden_dirs=args.skip_hidden_dirs,
-        skip_dirs=set(args.skip_dirs.split(',')),
-        skip_exts=set(args.skip_exts.split(',')),
+        skip_dirs=skip_dirs,
+        skip_exts=skip_exts,
         skip_symlink_files=not args.follow_symlinks,
         skip_symlink_dirs=not args.follow_symlinks,
     )
