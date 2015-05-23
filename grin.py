@@ -14,6 +14,16 @@ import sys
 
 import argparse
 
+try:
+    # On Python 3, accessing the fileno() attribute of a stream object will
+    # raise an io.UnsupportedOperation error, but a simple AttributeError on
+    # Python 2.
+    import cStringIO
+    UnsupportedOperation = AttributeError
+except ImportError:
+    import io
+    UnsupportedOperation = io.UnsupportedOperation
+
 
 #### Constants ####
 __version__ = '1.2.1'
@@ -24,7 +34,7 @@ MATCH = 0
 POST = 1
 
 # Use file(1)'s choices for what's text and what's not.
-TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + range(0x20, 0x100)))
+TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + list(range(0x20, 0x100))))
 ALLBYTES = ''.join(map(chr, range(256)))
 
 COLOR_TABLE = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
@@ -39,6 +49,12 @@ GZIP_MAGIC = '\037\213'
 
 # Target amount of data to read into memory at a time.
 READ_BLOCKSIZE = 16 * 1024 * 1024
+
+
+if sys.version_info >= (3, 0):
+    ALLBYTES = bytes(ALLBYTES, encoding='latin-1')
+    TEXTCHARS = bytes(TEXTCHARS, encoding='latin-1')
+    GZIP_MAGIC = bytes(GZIP_MAGIC, encoding='latin-1')
 
 
 def is_binary_string(bytes):
@@ -232,7 +248,13 @@ class GrepText(object):
         else:
             remaining = max(fp_size - fp.tell(), 0)
             target_io_size = min(READ_BLOCKSIZE, remaining)
-            block_main = fp.read(target_io_size)
+            try:
+                block_main = fp.read(target_io_size)
+            except UnicodeDecodeError:
+                # We hit an block that could not be decoded. Most likely this
+                # is because of some binary content that was embedded deep in
+                # the file (fits files do this).
+                return EMPTY_DATABLOCK
             is_last_block = target_io_size == remaining
 
         if prev is None:
@@ -313,7 +335,7 @@ class GrepText(object):
                     fp_size = status.st_size
                 else:
                     fp_size = None
-            except AttributeError:  # doesn't support fileno()
+            except UnsupportedOperation:  # doesn't support fileno()
                 fp_size = None
 
         block = self.read_block_with_context(None, fp, fp_size)
@@ -587,7 +609,7 @@ class FileRecognizer(object):
         """
         try:
             bytes = f.read(self.binary_bytes)
-        except Exception, e:
+        except Exception as e:
             # When trying to read from something that looks like a gzipped file,
             # it may be corrupt. If we do get an error, assume that the file is binary.
             return True
@@ -1009,6 +1031,22 @@ def get_regex(args):
     return re.compile(args.regex, flags)
 
 
+def gzip_opener_factory():
+    """ Return an opener for gzip files.
+
+    The return value is a callable which takes a filename and a mode argument
+    and returns an open file object. On Python 3, this sets the encoding on
+    the gzip file to utf-8, so that the file contents can be properly decoded.
+
+    """
+    if sys.version_info >= (3, 0):
+        def _python3_gzip_opener(filename, _):
+            return gzip.open(filename, 'rt', encoding='utf-8')
+        return _python3_gzip_opener
+    else:
+        return gzip.open
+
+
 def grin_main(argv=None):
     try:
         if argv is None:
@@ -1026,13 +1064,13 @@ def grin_main(argv=None):
 
         regex = get_regex(args)
         g = GrepText(regex, args)
-        openers = dict(text=open, gzip=gzip.open)
+        openers = dict(text=open, gzip=gzip_opener_factory())
         for filename, kind in get_filenames(args):
             report = g.grep_a_file(filename, opener=openers[kind])
             sys.stdout.write(report)
     except KeyboardInterrupt:
         raise SystemExit(0)
-    except IOError, e:
+    except IOError as e:
         if 'Broken pipe' in str(e):
             # The user is probably piping to a pager like less(1) and has exited
             # it. Just exit.
@@ -1040,7 +1078,7 @@ def grin_main(argv=None):
         raise
 
 def print_line(filename):
-    print filename
+    print(filename)
 
 def print_null(filename):
     # Note that the final filename will have a trailing NUL, just like 
@@ -1073,7 +1111,7 @@ def grind_main(argv=None):
                     output(filename)
     except KeyboardInterrupt:
         raise SystemExit(0)
-    except IOError, e:
+    except IOError as e:
         if 'Broken pipe' in str(e):
             # The user is probably piping to a pager like less(1) and has exited
             # it. Just exit.

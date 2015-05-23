@@ -1,5 +1,6 @@
 """ Test the file recognizer capabilities.
 """
+from __future__ import print_function
 
 import gzip
 import os
@@ -9,7 +10,15 @@ import sys
 
 import nose
 
-from grin import FileRecognizer
+from grin import FileRecognizer, GZIP_MAGIC
+
+
+def _b(s):
+    if sys.version_info >= (3, 0):
+        return bytes(s, encoding='latin-1')
+    else:
+        return bytes(s)
+
 
 def empty_file(filename, open=open):
     f = open(filename, 'wb')
@@ -17,7 +26,7 @@ def empty_file(filename, open=open):
 
 def binary_file(filename, open=open):
     f = open(filename, 'wb')
-    f.write(''.join(map(chr, range(256))))
+    f.write(_b(''.join(map(chr, list(range(256))))))
     f.close()
 
 def text_file(filename, open=open):
@@ -25,17 +34,16 @@ def text_file(filename, open=open):
     lines.append('baz\n')
     lines.extend(['foo\n', 'bar\n'] * 100)
     f = open(filename, 'wb')
-    f.writelines(lines)
+    f.writelines(line.encode('utf-8') for line in lines)
     f.close()
 
 def fake_gzip_file(filename, open=open):
     """ Write out a binary file that has the gzip magic header bytes, but is not
     a gzip file.
     """
-    GZIP_MAGIC = '\037\213'
     f = open(filename, 'wb')
     f.write(GZIP_MAGIC)
-    f.write(''.join(map(chr, range(256))))
+    f.write(_b(''.join(map(chr, list(range(256))))))
     f.close()
 
 def binary_middle(filename, open=open):
@@ -45,7 +53,7 @@ def binary_middle(filename, open=open):
     """
     text = 'a'*100 + '\0'*100 + 'b'*100
     f = open(filename, 'wb')
-    f.write(text)
+    f.write(text.encode('latin-1'))
     f.close()
 
 def socket_file(filename):
@@ -56,25 +64,25 @@ def unreadable_file(filename):
     """ Write a file that does not have read permissions.
     """
     text_file(filename)
-    os.chmod(filename, 0200)
+    os.chmod(filename, 0o200)
 
 def unreadable_dir(filename):
     """ Make a directory that does not have read permissions.
     """
     os.mkdir(filename)
-    os.chmod(filename, 0300)
+    os.chmod(filename, 0o300)
 
 def unexecutable_dir(filename):
     """ Make a directory that does not have execute permissions.
     """
     os.mkdir(filename)
-    os.chmod(filename, 0600)
+    os.chmod(filename, 0o600)
 
 def totally_unusable_dir(filename):
     """ Make a directory that has neither read nor execute permissions.
     """
     os.mkdir(filename)
-    os.chmod(filename, 0100)
+    os.chmod(filename, 0o100)
 
 def setup():
     # Make files to test individual recognizers.
@@ -135,13 +143,13 @@ def setup():
     text_file('tree/.skip_hidden_file')
     os.mkdir('tree/unreadable_dir')
     text_file('tree/unreadable_dir/text')
-    os.chmod('tree/unreadable_dir', 0300)
+    os.chmod('tree/unreadable_dir', 0o300)
     os.mkdir('tree/unexecutable_dir')
     text_file('tree/unexecutable_dir/text')
-    os.chmod('tree/unexecutable_dir', 0600)
+    os.chmod('tree/unexecutable_dir', 0o600)
     os.mkdir('tree/totally_unusable_dir')
     text_file('tree/totally_unusable_dir/text')
-    os.chmod('tree/totally_unusable_dir', 0100)
+    os.chmod('tree/totally_unusable_dir', 0o100)
 
 def ensure_deletability(arg, dirname, fnames):
     """ os.path.walk() callback function which will make sure every directory is
@@ -150,7 +158,7 @@ def ensure_deletability(arg, dirname, fnames):
     for fn in fnames:
         fn = os.path.join(dirname, fn)
         if os.path.isdir(fn):
-            os.chmod(fn, 0700)
+            os.chmod(fn, 0o700)
 
 def teardown():
     files_to_delete = ['empty', 'binary', 'binary_middle', 'text', 'text~',
@@ -168,10 +176,11 @@ def teardown():
                 os.unlink(filename)
             else:
                 os.rmdir(filename)
-        except Exception, e:
-            print >>sys.stderr, 'Could not delete %s: %s' % (filename, e)
+        except Exception as e:
+            print('Could not delete %s: %s' % (filename, e), file=sys.stderr)
     os.unlink('socket_test')
-    os.path.walk('tree', ensure_deletability, None)
+    for root, dirs, files in os.walk('tree', topdown=True):
+        ensure_deletability(None, root, dirs)
     shutil.rmtree('tree')
 
 

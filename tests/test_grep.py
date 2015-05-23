@@ -4,7 +4,11 @@ r'''
 Set up
 
     >>> import grin
-    >>> from cStringIO import StringIO
+    >>> try:
+    ...     from cStringIO import StringIO
+    ... except ImportError:
+    ...     from io import StringIO
+    ...
     >>> import re
     >>> 
     >>> all_foo = """\
