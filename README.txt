@@ -64,25 +64,13 @@ directories, I would have this line in my bashrc::
 Installation
 ------------
 
-grin uses setuptools_ to find and install its dependency on argparse_. grin is
-easy_installable::
+Install using pip_::
 
-  $ easy_install grin
+  $ pip install grin
 
-Alternatively, download and unpack the tarball and install::
+Running the unittests requires the nose_ framework::
 
-  $ tar zxf grin-1.2.tar.gz
-  $ python setup.py install
-
-On UNIX systems, use sudo for the latter command if you need to install the
-scripts to a directory that requires root privileges::
-
-  $ sudo python setup.py install
-
-Running the unittests requires the nose_ framework, which can also be
-easy_installed::
-
-  $ easy_install "nose >= 0.10"
+  $ pip install nose
   ...
   $ nosetests 
   .........................
@@ -94,9 +82,9 @@ easy_installed::
   running test
   ... etc.
 
-The development Subversion repository can be checked out anonymously::
+The development sources are hosted on Github:
 
-  $ svn co https://svn.enthought.com/svn/sandbox/grin/trunk/ grin
+  https://github.com/rkern/grin
 
 There is one little tweak to the installation that you may want to consider. By
 default, setuptools installs scripts indirectly; the scripts installed to
@@ -108,9 +96,8 @@ response of grin to be snappier, I recommend installing custom scripts that just
 import the grin module and run the appropriate main() function. See the files
 examples/grin and examples/grind for examples.
 
-.. _setuptools : http://pypi.python.org/pypi/setuptools
-.. _argparse : http://argparse.python-hosting.com
-.. _nose : http://www.somethingaboutorange.com/mrl/projects/nose
+.. _pip : https://pip.pypa.io/en/stable/
+.. _nose : https://nose.readthedocs.org/en/latest/
 
 
 Using grin
@@ -246,13 +233,12 @@ To Do
 
 * Figure out the story for grepping UTF-8, UTF-16 and UTF-32 Unicode text files.
 
+* Python 3
+
 
 Bugs and Such
 -------------
 
-If you find a bug, or a missing feature you really want added, please post to
-the enthought-dev_ mailing list or email the author at
-<robert.kern@enthought.com>.
+Please make a new issue at the Github issue tracker.
 
-.. _enthought-dev : https://mail.enthought.com/mailman/listinfo/enthought-dev
-
+  https://github.com/rkern/grin

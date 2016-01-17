@@ -34,9 +34,6 @@ setup(
             "grind = grin:grind_main",
         ],
     ),
-    install_requires = [
-        'argparse >= 1.1',
-    ],
     tests_require = [
         'nose >= 0.10',
     ],
