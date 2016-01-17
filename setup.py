@@ -6,7 +6,7 @@ kwds = {}
 
 # Read the long description from the README.txt
 thisdir = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(thisdir, 'README.txt')) as f:
+with open(os.path.join(thisdir, 'README.rst')) as f:
     kwds['long_description'] = f.read()
 
 
