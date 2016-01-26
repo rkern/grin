@@ -24,8 +24,8 @@ MATCH = 0
 POST = 1
 
 # Use file(1)'s choices for what's text and what's not.
-TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + range(0x20, 0x100)))
-ALLBYTES = ''.join(map(chr, range(256)))
+TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + list(range(0x20, 0x100))))
+ALLBYTES = ''.join(map(chr, list(range(256))))
 
 COLOR_TABLE = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
                'white', 'default']
@@ -54,7 +54,7 @@ def is_binary_string(bytes):
     """
     nontext = bytes.translate(ALLBYTES, TEXTCHARS)
     return bool(nontext)
-    
+
 def get_line_offsets(block):
     """ Compute the list of offsets in DataBlock 'block' which correspond to
     the beginnings of new lines.
@@ -80,18 +80,18 @@ def get_line_offsets(block):
             # Keep track of the count of lines within the "current block"
             if next_newline >= block.start and next_newline < block.end:
                 line_count += 1
-            
+
 def colorize(s, fg=None, bg=None, bold=False, underline=False, reverse=False):
     """ Wraps a string with ANSI color escape sequences corresponding to the
     style parameters given.
-    
+
     All of the color and style parameters are optional.
-    
+
     Parameters
     ----------
     s : str
     fg : str
-        Foreground color of the text.  One of (black, red, green, yellow, blue, 
+        Foreground color of the text.  One of (black, red, green, yellow, blue,
         magenta, cyan, white, default)
     bg : str
         Background color of the text.  Color choices are the same as for fg.
@@ -106,7 +106,7 @@ def colorize(s, fg=None, bg=None, bold=False, underline=False, reverse=False):
     -------
     A string with embedded color escape sequences.
     """
-    
+
     style_fragments = []
     if fg in COLOR_TABLE:
         # Foreground colors go from 30-39
@@ -207,7 +207,7 @@ class GrepText(object):
     def read_block_with_context(self, prev, fp, fp_size):
         """ Read a block of data from the file, along with some surrounding
         context.
-        
+
         Parameters
         ----------
         prev : DataBlock, or None
@@ -216,11 +216,11 @@ class GrepText(object):
 
         fp : filelike object
             The source of block data.
-        
+
         fp_size : int or None
             Size of the file in bytes, or None if the size could not be
             determined.
-        
+
         Returns
         -------
         A DataBlock representing the "current" block along with context.
@@ -364,7 +364,7 @@ class GrepText(object):
         block_context = []
         line_offsets = None
         line_count = None
-        
+
         def build_match_context(match):
             match_line_num = bisect.bisect(line_offsets, match.start() + block.start) - 1
             before_count = min(before, match_line_num)
@@ -457,7 +457,7 @@ class GrepText(object):
                         color_substring = colorize(old_substring, **style)
                         line = line[:start] + color_substring + line[end:]
                         total_offset += len(color_substring) - len(old_substring)
-                        
+
                 ns = dict(
                     lineno = i+1,
                     sep = {PRE: '-', POST: '+', MATCH: ':'}[kind],
@@ -553,7 +553,7 @@ class FileRecognizer(object):
                 self.skip_exts_simple.add(ext)
             else:
                 self.skip_exts_endswith.append(ext)
-        
+
         self.skip_symlink_dirs = skip_symlink_dirs
         self.skip_symlink_files = skip_symlink_files
         self.binary_bytes = binary_bytes
@@ -587,7 +587,7 @@ class FileRecognizer(object):
         """
         try:
             bytes = f.read(self.binary_bytes)
-        except Exception, e:
+        except Exception as e:
             # When trying to read from something that looks like a gzipped file,
             # it may be corrupt. If we do get an error, assume that the file is binary.
             return True
@@ -632,8 +632,8 @@ class FileRecognizer(object):
 
             'text' :
                 It should should be grepped for the pattern and the matching
-                lines displayed. 
-            'binary' : 
+                lines displayed.
+            'binary' :
                 The file is binary and should be either ignored or grepped
                 without displaying the matching lines depending on the
                 configuration.
@@ -673,12 +673,12 @@ class FileRecognizer(object):
                 return 'skip'
         except OSError:
             return 'unreadable'
-        
+
     def recognize_directory(self, filename):
         """ Determine what to do with a directory.
         """
         basename = os.path.split(filename)[-1]
-        if (self.skip_hidden_dirs and basename.startswith('.') and 
+        if (self.skip_hidden_dirs and basename.startswith('.') and
             basename not in ('.', '..')):
             return 'skip'
         if self.skip_symlink_dirs and os.path.islink(filename):
@@ -697,7 +697,7 @@ class FileRecognizer(object):
             return 'skip'
         if self.skip_symlink_files and os.path.islink(filename):
             return 'link'
-        
+
         filename_nc = os.path.normcase(filename)
         ext = os.path.splitext(filename_nc)[1]
         if ext in self.skip_exts_simple or ext.startswith('.~'):
@@ -776,10 +776,10 @@ def get_grin_arg_parser(parser=None):
     parser.add_argument('-N', '--no-line-number', action='store_false',
         dest='show_line_numbers', help="do not show the line numbers")
     parser.add_argument('-H', '--with-filename', action='store_true',
-        dest='show_filename', default=True, 
+        dest='show_filename', default=True,
         help="show the filenames of files that match [default]")
     parser.add_argument('--without-filename', action='store_false',
-        dest='show_filename', 
+        dest='show_filename',
         help="do not show the filenames of files that match")
     parser.add_argument('--emacs', action='store_true',
         dest='show_emacs',
@@ -1032,7 +1032,7 @@ def grin_main(argv=None):
             sys.stdout.write(report)
     except KeyboardInterrupt:
         raise SystemExit(0)
-    except IOError, e:
+    except IOError as e:
         if 'Broken pipe' in str(e):
             # The user is probably piping to a pager like less(1) and has exited
             # it. Just exit.
@@ -1040,10 +1040,10 @@ def grin_main(argv=None):
         raise
 
 def print_line(filename):
-    print filename
+    print(filename)
 
 def print_null(filename):
-    # Note that the final filename will have a trailing NUL, just like 
+    # Note that the final filename will have a trailing NUL, just like
     # "find -print0" does.
     sys.stdout.write(filename)
     sys.stdout.write('\0')
@@ -1073,7 +1073,7 @@ def grind_main(argv=None):
                     output(filename)
     except KeyboardInterrupt:
         raise SystemExit(0)
-    except IOError, e:
+    except IOError as e:
         if 'Broken pipe' in str(e):
             # The user is probably piping to a pager like less(1) and has exited
             # it. Just exit.
