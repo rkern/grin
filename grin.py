@@ -24,8 +24,7 @@ MATCH = 0
 POST = 1
 
 # Use file(1)'s choices for what's text and what's not.
-TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + list(range(0x20, 0x100))))
-ALLBYTES = ''.join(map(chr, list(range(256))))
+TEXT_CHARS = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7f})
 
 COLOR_TABLE = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
                'white', 'default']
@@ -41,19 +40,19 @@ GZIP_MAGIC = '\037\213'
 READ_BLOCKSIZE = 16 * 1024 * 1024
 
 
-def is_binary_string(bytes):
+def is_binary_string(s):
     """ Determine if a string is classified as binary rather than text.
 
     Parameters
     ----------
-    bytes : str
+    s : str
 
     Returns
     -------
     is_binary : bool
     """
-    nontext = bytes.translate(ALLBYTES, TEXTCHARS)
-    return bool(nontext)
+    return bool(s.translate(None, TEXT_CHARS))
+
 
 def get_line_offsets(block):
     """ Compute the list of offsets in DataBlock 'block' which correspond to
