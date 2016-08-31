@@ -816,13 +816,13 @@ def get_grin_arg_parser(parser=None):
         default=True, action='store_true',
         help="do skip .hidden directories [default]")
     parser.add_argument('-d', '--skip-dirs',
-        default='CVS,RCS,.svn,.hg,.bzr,build,dist',
+        default='CVS,RCS,.svn,.hg,.bzr,build,dist,target',
         help="comma-separated list of directory names to skip [default=%(default)r]")
     parser.add_argument('-D', '--no-skip-dirs', dest='skip_dirs',
         action='store_const', const='',
         help="do not skip any directories")
     parser.add_argument('-e', '--skip-exts',
-        default='.pyc,.pyo,.so,.o,.a,.tgz,.tar.gz,.rar,.zip,~,#,.bak,.png,.jpg,.gif,.bmp,.tif,.tiff,.pyd,.dll,.exe,.obj,.lib',
+        default='.pyc,.pyo,.so,.o,.a,.tgz,.tar.gz,.rar,.zip,~,#,.bak,.png,.jpg,.gif,.bmp,.tif,.tiff,.pyd,.dll,.exe,.obj,.lib,.class',
         help="comma-separated list of file extensions to skip [default=%(default)r]")
     parser.add_argument('-E', '--no-skip-exts', dest='skip_exts',
         action='store_const', const='',
@@ -874,13 +874,13 @@ def get_grind_arg_parser(parser=None):
         default=True, action='store_true',
         help="do skip .hidden directories")
     parser.add_argument('-d', '--skip-dirs',
-        default='CVS,RCS,.svn,.hg,.bzr,build,dist',
+        default='CVS,RCS,.svn,.hg,.bzr,build,dist,target',
         help="comma-separated list of directory names to skip [default=%(default)r]")
     parser.add_argument('-D', '--no-skip-dirs', dest='skip_dirs',
         action='store_const', const='',
         help="do not skip any directories")
     parser.add_argument('-e', '--skip-exts',
-        default='.pyc,.pyo,.so,.o,.a,.tgz,.tar.gz,.rar,.zip,~,#,.bak,.png,.jpg,.gif,.bmp,.tif,.tiff,.pyd,.dll,.exe,.obj,.lib',
+        default='.pyc,.pyo,.so,.o,.a,.tgz,.tar.gz,.rar,.zip,~,#,.bak,.png,.jpg,.gif,.bmp,.tif,.tiff,.pyd,.dll,.exe,.obj,.lib,.class',
         help="comma-separated list of file extensions to skip [default=%(default)r]")
     parser.add_argument('-E', '--no-skip-exts', dest='skip_exts',
         action='store_const', const='',
