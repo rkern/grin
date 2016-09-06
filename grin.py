@@ -468,7 +468,7 @@ class GrepText(object):
                         color_substring = colorize(old_substring, **style)
                         line = line[:start] + color_substring + line[end:]
                         total_offset += len(color_substring) - len(old_substring)
-                        
+
                 ns = dict(
                     lineno = i+1,
                     sep = {PRE: '-', POST: '+', MATCH: ':'}[kind],
@@ -506,8 +506,8 @@ class GrepText(object):
             f = sys.stdin
             filename = '<STDIN>'
         else:
-            # 'r' does the right thing for both open ('rt') and gzip.open ('rb')
-            f = opener(filename, 'r')
+            # Always open in binary mode
+            f = opener(filename, 'rb')
         try:
             unique_context = self.do_grep(f)
         finally:
