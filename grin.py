@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ grin searches text files.
 """
+from __future__ import print_function
 
 import bisect
 import fnmatch
@@ -11,9 +12,16 @@ import re
 import shlex
 import stat
 import sys
+from io import UnsupportedOperation
 
 import argparse
 
+if sys.version_info[0] > 2:
+    to_str = lambda s : s.decode('latin1')
+    ints2bytes = bytes
+else:
+    to_str = str
+    ints2bytes = lambda ints : ''.join(map(chr, ints))
 
 #### Constants ####
 __version__ = '1.2.1'
@@ -24,8 +32,8 @@ MATCH = 0
 POST = 1
 
 # Use file(1)'s choices for what's text and what's not.
-TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + range(0x20, 0x100)))
-ALLBYTES = ''.join(map(chr, range(256)))
+TEXTCHARS = ints2bytes([7,8,9,10,12,13,27] + list(range(0x20, 0x100)))
+ALLBYTES = ints2bytes(range(256))
 
 COLOR_TABLE = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
                'white', 'default']
@@ -35,11 +43,10 @@ COLOR_STYLE = {
         }
 
 # gzip magic header bytes.
-GZIP_MAGIC = '\037\213'
+GZIP_MAGIC = b'\037\213'
 
 # Target amount of data to read into memory at a time.
 READ_BLOCKSIZE = 16 * 1024 * 1024
-
 
 def is_binary_string(bytes):
     """ Determine if a string is classified as binary rather than text.
@@ -54,7 +61,8 @@ def is_binary_string(bytes):
     """
     nontext = bytes.translate(ALLBYTES, TEXTCHARS)
     return bool(nontext)
-    
+
+
 def get_line_offsets(block):
     """ Compute the list of offsets in DataBlock 'block' which correspond to
     the beginnings of new lines.
@@ -80,7 +88,8 @@ def get_line_offsets(block):
             # Keep track of the count of lines within the "current block"
             if next_newline >= block.start and next_newline < block.end:
                 line_count += 1
-            
+
+
 def colorize(s, fg=None, bg=None, bold=False, underline=False, reverse=False):
     """ Wraps a string with ANSI color escape sequences corresponding to the
     style parameters given.
@@ -207,7 +216,7 @@ class GrepText(object):
     def read_block_with_context(self, prev, fp, fp_size):
         """ Read a block of data from the file, along with some surrounding
         context.
-        
+
         Parameters
         ----------
         prev : DataBlock, or None
@@ -216,11 +225,11 @@ class GrepText(object):
 
         fp : filelike object
             The source of block data.
-        
+
         fp_size : int or None
             Size of the file in bytes, or None if the size could not be
             determined.
-        
+
         Returns
         -------
         A DataBlock representing the "current" block along with context.
@@ -241,7 +250,7 @@ class GrepText(object):
                 # can avoid the overhead of locating lines of 'before' and
                 # 'after' context.
                 result = DataBlock(
-                    data = block_main,
+                    data = to_str(block_main),
                     start = 0,
                     end = len(block_main),
                     before_count = 0,
@@ -280,7 +289,7 @@ class GrepText(object):
             after_lines = ''.join(after_lines_list)
 
         result = DataBlock(
-            data = before_lines + curr_block + after_lines,
+            data = to_str(before_lines + curr_block + after_lines),
             start = len(before_lines),
             end = len(before_lines) + len(curr_block),
             before_count = before_count,
@@ -308,13 +317,15 @@ class GrepText(object):
             fp_size = None  # gzipped data is usually longer than the file
         else:
             try:
-                status = os.fstat(fp.fileno())
+                file_no = fp.fileno()
+            except (AttributeError, UnsupportedOperation):  # doesn't support fileno()
+                fp_size = None
+            else:
+                status = os.fstat(file_no)
                 if stat.S_ISREG(status.st_mode):
                     fp_size = status.st_size
                 else:
                     fp_size = None
-            except AttributeError:  # doesn't support fileno()
-                fp_size = None
 
         block = self.read_block_with_context(None, fp, fp_size)
         while block.end > block.start:
@@ -587,7 +598,7 @@ class FileRecognizer(object):
         """
         try:
             bytes = f.read(self.binary_bytes)
-        except Exception, e:
+        except Exception as e:
             # When trying to read from something that looks like a gzipped file,
             # it may be corrupt. If we do get an error, assume that the file is binary.
             return True
@@ -1032,7 +1043,7 @@ def grin_main(argv=None):
             sys.stdout.write(report)
     except KeyboardInterrupt:
         raise SystemExit(0)
-    except IOError, e:
+    except IOError as e:
         if 'Broken pipe' in str(e):
             # The user is probably piping to a pager like less(1) and has exited
             # it. Just exit.
@@ -1040,7 +1051,7 @@ def grin_main(argv=None):
         raise
 
 def print_line(filename):
-    print filename
+    print(filename)
 
 def print_null(filename):
     # Note that the final filename will have a trailing NUL, just like 
@@ -1073,7 +1084,7 @@ def grind_main(argv=None):
                     output(filename)
     except KeyboardInterrupt:
         raise SystemExit(0)
-    except IOError, e:
+    except IOError as e:
         if 'Broken pipe' in str(e):
             # The user is probably piping to a pager like less(1) and has exited
             # it. Just exit.
