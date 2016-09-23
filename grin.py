@@ -237,6 +237,10 @@ class GrepText(object):
             block_main = fp.read(target_io_size)
             is_last_block = target_io_size == remaining
 
+        if not isinstance(block_main, str):
+            # Python 3: Ensure strings are returned
+            block_main = block_main.decode('utf8')
+
         if prev is None:
             if is_last_block:
                 # FAST PATH: the entire file fits into a single block, so we
