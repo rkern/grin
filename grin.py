@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 """ grin searches text files.
 """
+from __future__ import print_function
 
+import argparse
 import bisect
 import fnmatch
 import gzip
@@ -10,9 +12,8 @@ import os
 import re
 import shlex
 import stat
+import struct
 import sys
-
-import argparse
 
 
 #### Constants ####
@@ -24,8 +25,9 @@ MATCH = 0
 POST = 1
 
 # Use file(1)'s choices for what's text and what's not.
-TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + range(0x20, 0x100)))
-ALLBYTES = ''.join(map(chr, range(256)))
+TEXTCHARS = [7, 8, 9, 10, 12, 13, 27] + list(range(0x20, 0x100))
+TEXTCHARS = struct.pack('B'*len(TEXTCHARS), *TEXTCHARS)
+ALLBYTES = struct.pack('B'*256, *range(256))
 
 COLOR_TABLE = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
                'white', 'default']
@@ -35,7 +37,7 @@ COLOR_STYLE = {
         }
 
 # gzip magic header bytes.
-GZIP_MAGIC = '\037\213'
+GZIP_MAGIC = struct.pack('BB', 0x1F, 0x8B)
 
 # Target amount of data to read into memory at a time.
 READ_BLOCKSIZE = 16 * 1024 * 1024
@@ -569,10 +571,8 @@ class FileRecognizer(object):
         -------
         is_binary : bool
         """
-        f = open(filename, 'rb')
-        is_binary = self._is_binary_file(f)
-        f.close()
-        return is_binary
+        with open(filename, 'rb') as fp:
+            return self._is_binary_file(fp)
 
     def _is_binary_file(self, f):
         """ Determine if a given filelike object has binary data or not.
@@ -586,12 +586,12 @@ class FileRecognizer(object):
         is_binary : bool
         """
         try:
-            bytes = f.read(self.binary_bytes)
-        except Exception, e:
+            data = f.read(self.binary_bytes)
+        except Exception:
             # When trying to read from something that looks like a gzipped file,
             # it may be corrupt. If we do get an error, assume that the file is binary.
             return True
-        return is_binary_string(bytes)
+        return is_binary_string(data)
 
     def is_gzipped_text(self, filename):
         """ Determine if a given file is a gzip-compressed text file or not.
@@ -608,20 +608,17 @@ class FileRecognizer(object):
         is_gzipped_text : bool
         """
         is_gzipped_text = False
-        f = open(filename, 'rb')
-        marker = f.read(2)
-        f.close()
+        with open(filename, 'rb') as fp:
+            marker = fp.read(2)
+
         if marker == GZIP_MAGIC:
-            fp = gzip.open(filename)
-            try:
+            with gzip.open(filename) as fp:
                 try:
                     is_gzipped_text = not self._is_binary_file(fp)
                 except IOError:
                     # We saw the GZIP_MAGIC marker, but it is not actually a gzip
                     # file.
                     is_gzipped_text = False
-            finally:
-                fp.close()
         return is_gzipped_text
 
     def recognize(self, filename):
@@ -1032,15 +1029,12 @@ def grin_main(argv=None):
             sys.stdout.write(report)
     except KeyboardInterrupt:
         raise SystemExit(0)
-    except IOError, e:
+    except IOError as e:
         if 'Broken pipe' in str(e):
             # The user is probably piping to a pager like less(1) and has exited
             # it. Just exit.
             raise SystemExit(0)
         raise
-
-def print_line(filename):
-    print filename
 
 def print_null(filename):
     # Note that the final filename will have a trailing NUL, just like 
@@ -1061,7 +1055,7 @@ def grind_main(argv=None):
         if args.null_separated:
             output = print_null
         else:
-            output = print_line
+            output = print
 
         if args.sys_path:
             args.dirs.extend(sys.path)
@@ -1073,7 +1067,7 @@ def grind_main(argv=None):
                     output(filename)
     except KeyboardInterrupt:
         raise SystemExit(0)
-    except IOError, e:
+    except IOError as e:
         if 'Broken pipe' in str(e):
             # The user is probably piping to a pager like less(1) and has exited
             # it. Just exit.
