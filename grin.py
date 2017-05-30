@@ -587,7 +587,7 @@ class FileRecognizer(object):
         """
         try:
             bytes = f.read(self.binary_bytes)
-        except Exception, e:
+        except Exception as e:
             # When trying to read from something that looks like a gzipped file,
             # it may be corrupt. If we do get an error, assume that the file is binary.
             return True
@@ -1032,7 +1032,7 @@ def grin_main(argv=None):
             sys.stdout.write(report)
     except KeyboardInterrupt:
         raise SystemExit(0)
-    except IOError, e:
+    except IOError as e:
         if 'Broken pipe' in str(e):
             # The user is probably piping to a pager like less(1) and has exited
             # it. Just exit.
