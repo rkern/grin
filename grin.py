@@ -587,7 +587,7 @@ class FileRecognizer(object):
         """
         try:
             bytes = f.read(self.binary_bytes)
-        except Exception, e:
+        except Exception as e:
             # When trying to read from something that looks like a gzipped file,
             # it may be corrupt. If we do get an error, assume that the file is binary.
             return True
