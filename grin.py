@@ -236,12 +236,12 @@ class GrepText(object):
         """
         if fp_size is None:
             target_io_size = READ_BLOCKSIZE
-            block_main = fp.read(target_io_size)
+            block_main = to_str(fp.read(target_io_size))
             is_last_block = len(block_main) < target_io_size
         else:
             remaining = max(fp_size - fp.tell(), 0)
             target_io_size = min(READ_BLOCKSIZE, remaining)
-            block_main = fp.read(target_io_size)
+            block_main = to_str(fp.read(target_io_size))
             is_last_block = target_io_size == remaining
 
         if prev is None:
@@ -250,7 +250,7 @@ class GrepText(object):
                 # can avoid the overhead of locating lines of 'before' and
                 # 'after' context.
                 result = DataBlock(
-                    data = to_str(block_main),
+                    data = block_main,
                     start = 0,
                     end = len(block_main),
                     before_count = 0,
@@ -280,16 +280,17 @@ class GrepText(object):
         before_lines = prev.data[before_start:prev.end]
         # Using readline() to force this block out to a newline boundary...
         curr_block = (prev.data[prev.end:] + block_main +
-            ('' if is_last_block else fp.readline()))
+            ('' if is_last_block else to_str(fp.readline())))
         # Read in some lines of 'after' context.
         if is_last_block:
             after_lines = ''
         else:
-            after_lines_list = [fp.readline() for i in range(self.options.after_context)]
+            after_lines_list = [to_str(fp.readline())
+                                for i in range(self.options.after_context)]
             after_lines = ''.join(after_lines_list)
 
         result = DataBlock(
-            data = to_str(before_lines + curr_block + after_lines),
+            data = before_lines + curr_block + after_lines,
             start = len(before_lines),
             end = len(before_lines) + len(curr_block),
             before_count = before_count,
