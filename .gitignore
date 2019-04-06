@@ -1,3 +1,5 @@
 build/
 dist/
 grin.egg-info/
+__pycache__/
+*.pyc
