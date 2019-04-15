@@ -816,7 +816,7 @@ def get_grin_arg_parser(parser=None):
         default=True, action='store_true',
         help="do skip .hidden directories [default]")
     parser.add_argument('-d', '--skip-dirs',
-        default='CVS,RCS,.svn,.hg,.bzr,build,dist,target',
+        default='CVS,RCS,.svn,.hg,.bzr,build,dist,target,node_modules',
         help="comma-separated list of directory names to skip [default=%(default)r]")
     parser.add_argument('-D', '--no-skip-dirs', dest='skip_dirs',
         action='store_const', const='',
@@ -874,7 +874,7 @@ def get_grind_arg_parser(parser=None):
         default=True, action='store_true',
         help="do skip .hidden directories")
     parser.add_argument('-d', '--skip-dirs',
-        default='CVS,RCS,.svn,.hg,.bzr,build,dist,target',
+        default='CVS,RCS,.svn,.hg,.bzr,build,dist,target,node_modules',
         help="comma-separated list of directory names to skip [default=%(default)r]")
     parser.add_argument('-D', '--no-skip-dirs', dest='skip_dirs',
         action='store_const', const='',
