@@ -1,3 +1,8 @@
 build/
 dist/
-grin.egg-info/
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.vscode/
+*.pyc
+__pycache__
