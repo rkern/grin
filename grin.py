@@ -602,7 +602,7 @@ class FileRecognizer(object):
         self.skip_exts_endswith = list()
         for ext in skip_exts:
             if os.path.splitext(b"foo.bar" + ext)[1] == ext:
-                self.skip_exts_simple.add(ext)
+               self.skip_exts_simple.add(ext)
             else:
                 self.skip_exts_endswith.append(ext)
 
@@ -1341,10 +1341,16 @@ def grind_main(argv=None):
         if args.sys_path:
             args.dirs.extend(sys.path)
 
+        dirs = args.dirs
+        glob = args.glob
+        if sys.version_info.major > 2:
+            dirs = [d.encode(sys.stdout.encoding) for d in dirs]
+            glob = glob.encode(sys.stdout.encoding)
+
         fr = get_recognizer(args)
-        for dir in args.dirs:
+        for dir in dirs:
             for filename, k in fr.walk(dir):
-                if fnmatch.fnmatch(os.path.basename(filename), args.glob):
+                if fnmatch.fnmatch(os.path.basename(filename), glob):
                     output(filename)
     except KeyboardInterrupt:
         raise SystemExit(0)
