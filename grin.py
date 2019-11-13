@@ -16,7 +16,7 @@ import sys
 
 import argparse
 
-from io import open
+from io import open, UnsupportedOperation
 
 #### Constants ####
 __version__ = "1.3.1"
@@ -31,15 +31,15 @@ TEXTCHARS = bytearray([7, 8, 9, 10, 12, 13, 27] + list(range(0x20, 0x100)))
 ALLBYTES = bytearray(range(256))
 
 COLOR_TABLE = [
-    b"black",
-    b"red",
-    b"green",
-    b"yellow",
-    b"blue",
-    b"magenta",
-    b"cyan",
-    b"white",
-    b"default",
+        "black",
+    "red",
+    "green",
+    "yellow",
+    "blue",
+    "magenta",
+    "cyan",
+    "white",
+    "default",
 ]
 COLOR_STYLE = {
     "filename": dict(fg="green", bold=True),
@@ -334,7 +334,7 @@ class GrepText(object):
                     fp_size = status.st_size
                 else:
                     fp_size = None
-            except AttributeError:  # doesn't support fileno()
+            except (AttributeError, UnsupportedOperation):  # doesn't support fileno()
                 fp_size = None
 
         block = self.read_block_with_context(None, fp, fp_size)
@@ -504,12 +504,12 @@ class GrepText(object):
                         line = line[:start] + color_substring + line[end:]
                         total_offset += len(color_substring) - len(old_substring)
 
-                ns = dict(
-                    lineno=i + 1,
-                    sep={PRE: b"-", POST: b"+", MATCH: b":"}[kind],
-                    line=line,
-                    filename=filename,
-                )
+                ns = {
+                    b'lineno': str(i + 1).encode('ascii'),
+                    b'sep':{PRE: b"-", POST: b"+", MATCH: b":"}[kind],
+                    b'line': line,
+                    b'filename': filename,
+                }
                 line = template % ns
                 lines.append(line)
                 if not line.endswith(b"\n"):
@@ -970,7 +970,7 @@ def get_grin_arg_parser(parser=None):
         "--no-skip-dirs",
         dest="skip_dirs",
         action="store_const",
-        const="",
+        const=b"",
         help="do not skip any directories",
     )
     parser.add_argument(
@@ -984,7 +984,7 @@ def get_grin_arg_parser(parser=None):
         "--no-skip-exts",
         dest="skip_exts",
         action="store_const",
-        const="",
+        const=b"",
         help="do not skip any file extensions",
     )
     parser.add_argument(
@@ -1149,8 +1149,14 @@ def get_recognizer(args):
     """ Get the file recognizer object from the configured options.
     """
     # Make sure we have empty sets when we have empty strings.
-    skip_dirs = set([x for x in args.skip_dirs.split(",") if x])
-    skip_exts = set([x for x in args.skip_exts.split(",") if x])
+    skip_dirs = args.skip_dirs
+    skip_exts = args.skip_exts
+    if sys.version_info.major > 2:
+        skip_dirs = skip_dirs.encode(sys.stdout.encoding)
+        skip_exts = skip_exts.encode(sys.stdout.encoding)
+
+    skip_dirs = set([x for x in skip_dirs.split(b",") if x])
+    skip_exts = set([x for x in skip_exts.split(b",") if x])
     fr = FileRecognizer(
         skip_hidden_files=args.skip_hidden_files,
         skip_backup_files=args.skip_backup_files,
@@ -1184,11 +1190,14 @@ def get_filenames(args):
     files = []
     # If the user has given us a file with filenames, consume them first.
     if args.files_from_file is not None:
-        if args.files_from_file == "-":
-            files_file = sys.stdin
+        if args.files_from_file == b"-":
+            files_file_content = sys.stdin.read()
+            if sys.version_info.major > 2:
+                files_file_content = files_file_content.encode(sys.stdout.encoding)
             should_close = False
         elif os.path.exists(args.files_from_file):
-            files_file = open(args.files_from_file)
+            files_file = open(args.files_from_file, 'rb')
+            files_file_content = files_file.read()
             should_close = True
         else:
             raise IOError(2, "No such file: %r" % args.files_from_file)
@@ -1199,48 +1208,56 @@ def get_filenames(args):
             # grin -f against a binary file and got an unhelpful error message
             # later.
             if args.null_separated:
-                files.extend([x.strip() for x in files_file.read().split("\0")])
+                files.extend([x.strip() for x in files_file_content.split(b"\0")])
             else:
-                files.extend([x.strip() for x in files_file])
+                files.extend([x.strip() for x in files_file_content.split(b"\n")])
         finally:
             if should_close:
                 files_file.close()
 
     # Now add the filenames provided on the command line itself.
-    files.extend(args.files)
+    files = args.files
+    path_files = sys.path
+    if sys.version_info.major:
+        files = [f.encode(sys.stdout.encoding) for f in files]
+        path_files  = [f.encode(sys.stdout.encoding) for f in path_files]
+    files.extend(files)
     if args.sys_path:
-        files.extend(sys.path)
+        files.extend(path_files)
     # Make sure we don't have any empty strings lying around.
     # Also skip certain special null files which may be added by programs like
     # Emacs.
     if sys.platform == "win32":
-        upper_bad = set(["NUL:", "NUL"])
-        raw_bad = set([""])
+        upper_bad = set([b"NUL:", b"NUL"])
+        raw_bad = set([b""])
     else:
         upper_bad = set()
-        raw_bad = set(["", "/dev/null"])
+        raw_bad = set([b"", b"/dev/null"])
     files = [fn for fn in files if fn not in raw_bad and fn.upper() not in upper_bad]
     if len(files) == 0:
         # Add the current directory at least.
-        files = ["."]
+        files = [b"."]
 
     # Go over our list of filenames and see if we can recognize each as
     # something we want to grep.
     fr = get_recognizer(args)
     for fn in files:
         # Special case text stdin.
-        if fn == "-":
+        if fn == b"-":
             yield fn, "text"
             continue
         kind = fr.recognize(fn)
+        include = args.include
+        if sys.version_info.major > 2:
+            include = include.encode(sys.stdout.encoding)
         if kind in ("text", "gzip") and fnmatch.fnmatch(
-            os.path.basename(fn), args.include
+            os.path.basename(fn), include
         ):
             yield fn, kind
         elif kind == "directory":
             for filename, k in fr.walk(fn):
                 if k in ("text", "gzip") and fnmatch.fnmatch(
-                    os.path.basename(filename), args.include
+                    os.path.basename(filename), include
                 ):
                     yield filename, k
         # XXX: warn about other files?
@@ -1254,7 +1271,11 @@ def get_regex(args):
     flags = 0
     for flag in args.re_flags:
         flags |= flag
-    return re.compile(args.regex, flags)
+
+    regex = args.regex
+    if sys.version_info.major > 2:
+        regex = regex.encode('utf8')
+    return re.compile(regex, flags)
 
 
 def grin_main(argv=None):
@@ -1279,7 +1300,10 @@ def grin_main(argv=None):
         openers = dict(text=open, gzip=gzip.open)
         for filename, kind in get_filenames(args):
             report = g.grep_a_file(filename, opener=openers[kind])
-            sys.stdout.write(report)
+            if sys.version_info.major > 2:
+                sys.stdout.buffer.write(report)
+            else:
+                sys.stdout.write(report)
     except KeyboardInterrupt:
         raise SystemExit(0)
     except IOError as e:
