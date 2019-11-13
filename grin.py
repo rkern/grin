@@ -19,7 +19,7 @@ import argparse
 from io import open, UnsupportedOperation
 
 #### Constants ####
-__version__ = "1.3.1"
+__version__ = "1.3.0"
 
 # Maintain the numerical order of these constants. We use them for sorting.
 PRE = -1
@@ -31,7 +31,7 @@ TEXTCHARS = bytearray([7, 8, 9, 10, 12, 13, 27] + list(range(0x20, 0x100)))
 ALLBYTES = bytearray(range(256))
 
 COLOR_TABLE = [
-        "black",
+    "black",
     "red",
     "green",
     "yellow",
@@ -505,10 +505,10 @@ class GrepText(object):
                         total_offset += len(color_substring) - len(old_substring)
 
                 ns = {
-                    b'lineno': str(i + 1).encode('ascii'),
-                    b'sep':{PRE: b"-", POST: b"+", MATCH: b":"}[kind],
-                    b'line': line,
-                    b'filename': filename,
+                    b"lineno": str(i + 1).encode("ascii"),
+                    b"sep": {PRE: b"-", POST: b"+", MATCH: b":"}[kind],
+                    b"line": line,
+                    b"filename": filename,
                 }
                 line = template % ns
                 lines.append(line)
@@ -1196,7 +1196,7 @@ def get_filenames(args):
                 files_file_content = files_file_content.encode(sys.stdout.encoding)
             should_close = False
         elif os.path.exists(args.files_from_file):
-            files_file = open(args.files_from_file, 'rb')
+            files_file = open(args.files_from_file, "rb")
             files_file_content = files_file.read()
             should_close = True
         else:
@@ -1220,7 +1220,7 @@ def get_filenames(args):
     path_files = sys.path
     if sys.version_info.major:
         files = [f.encode(sys.stdout.encoding) for f in files]
-        path_files  = [f.encode(sys.stdout.encoding) for f in path_files]
+        path_files = [f.encode(sys.stdout.encoding) for f in path_files]
     files.extend(files)
     if args.sys_path:
         files.extend(path_files)
@@ -1250,9 +1250,7 @@ def get_filenames(args):
         include = args.include
         if sys.version_info.major > 2:
             include = include.encode(sys.stdout.encoding)
-        if kind in ("text", "gzip") and fnmatch.fnmatch(
-            os.path.basename(fn), include
-        ):
+        if kind in ("text", "gzip") and fnmatch.fnmatch(os.path.basename(fn), include):
             yield fn, kind
         elif kind == "directory":
             for filename, k in fr.walk(fn):
@@ -1274,7 +1272,7 @@ def get_regex(args):
 
     regex = args.regex
     if sys.version_info.major > 2:
-        regex = regex.encode('utf8')
+        regex = regex.encode("utf8")
     return re.compile(regex, flags)
 
 
