@@ -24,7 +24,7 @@ else:
     ints2bytes = lambda ints : ''.join(map(chr, ints))
 
 #### Constants ####
-__version__ = '1.2.1'
+__version__ = '1.3.0'
 
 # Maintain the numerical order of these constants. We use them for sorting.
 PRE = -1
