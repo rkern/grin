@@ -15,6 +15,8 @@ setup(
     version='1.3.0',
     author='Robert Kern',
     author_email='robert.kern@enthought.com',
+    maintainer='Matthew Brett',
+    maintainer_email='matthew.brett@gmail.com',
     description="A grep program configured the way I like it.",
     license="BSD",
     url='https://github.com/matthew-brett/grin',
