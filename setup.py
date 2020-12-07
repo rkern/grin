@@ -12,7 +12,7 @@ with open(os.path.join(thisdir, 'README.rst')) as f:
 
 setup(
     name='grin',
-    version='1.3.0',
+    version='1.3.1',
     author='Robert Kern',
     author_email='robert.kern@enthought.com',
     maintainer='Matthew Brett',
