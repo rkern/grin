@@ -31,7 +31,7 @@ twine upload sdist/grin*.tar.gz
 ```
 
 ```
-git tag -S <version-no>
+git tag -s <version-no>
 git push --tags
 ```
 
