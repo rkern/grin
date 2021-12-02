@@ -84,11 +84,11 @@ Running the unittests requires the nose_ framework::
 
 The development sources are hosted on Github:
 
-  https://github.com/rkern/grin
+  https://github.com/matthew-brett/grin
 
 There is one little tweak to the installation that you may want to consider. By
 default, setuptools installs scripts indirectly; the scripts installed to
-$prefix/bin or Python2x\Scripts use setuptools' pkg_resources module to load
+$prefix/bin or Python\Scripts use setuptools' pkg_resources module to load
 the exact version of grin egg that installed the script, then runs the script's
 main() function. This is not usually a bad feature, but it can add substantial
 startup overhead for a small command-line utility like grin. If you want the
@@ -241,4 +241,4 @@ Bugs and Such
 
 Please make a new issue at the Github issue tracker.
 
-  https://github.com/rkern/grin
+  https://github.com/matthew-brett/grin

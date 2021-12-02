@@ -12,12 +12,14 @@ with open(os.path.join(thisdir, 'README.rst')) as f:
 
 setup(
     name='grin',
-    version='1.2.2',
+    version='1.3.1',
     author='Robert Kern',
     author_email='robert.kern@enthought.com',
+    maintainer='Matthew Brett',
+    maintainer_email='matthew.brett@gmail.com',
     description="A grep program configured the way I like it.",
     license="BSD",
-    url='https://github.com/rkern/grin',
+    url='https://github.com/matthew-brett/grin',
     classifiers=[
         "License :: OSI Approved :: BSD License",
         "Development Status :: 5 - Production/Stable",
@@ -25,6 +27,7 @@ setup(
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
         "Topic :: Utilities",
     ],
     py_modules=["grin"],

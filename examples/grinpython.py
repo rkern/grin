@@ -3,7 +3,7 @@
 """ Transform Python code by omitting strings, comments, and/or code.
 """
 
-from cStringIO import StringIO
+from io import BytesIO
 import os
 import shlex
 import string
@@ -55,7 +55,7 @@ class Transformer(object):
         """ Open a file and convert it to a filelike object with transformed
         contents.
         """
-        g = StringIO()
+        g = BytesIO()
         f = open(filename, mode)
         try:
             gen = tokenize.generate_tokens(f.readline)
