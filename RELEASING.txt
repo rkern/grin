@@ -1,0 +1,49 @@
+# Release process
+
+Check log since last release, build `ChangeLog`.
+
+```
+git clean -fxd
+```
+
+## Do pre-release
+
+Change `tag_build` to `rc` in `setup.cfg`.
+
+Check travis-ci.
+
+```
+git clean -fxd
+python setup.py sdist
+twine upload sdist/grin*.tar.gz
+```
+
+As for feedback.
+
+Change `tag_build` to empty in `setup.cfg`.
+
+Check travis-ci.
+
+```
+git clean -fxd
+python setup.py sdist
+twine upload sdist/grin*.tar.gz
+```
+
+```
+git tag -s <version-no>
+git push --tags
+```
+
+## Prepare for next release
+
+Change `__version__` in `grin.py`.
+
+Change `__version__` in `setup.py`.
+
+Change `tag_build` to `.dev` in `setup.cfg`.
+
+```
+git commit
+git push
+```
